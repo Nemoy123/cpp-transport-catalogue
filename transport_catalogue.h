@@ -28,7 +28,6 @@ public:
     void AddBusRoute (const Bus& bus);
     const Stop* FindStop (const std::string_view stop);
     const Bus* FindBus (const std::string_view bus);
-    std::deque <Stop>& GiveMeStops () {return all_stops_;}
     std::tuple <std::string_view, std::size_t, std::size_t, double, double> GetBusInfo (const std::string_view bus_name);
     std::map <int, std::string> GetStopInfo (const std::string_view stop_name);
     void InputDistance (const Stop* stopA, const Stop* stopB, const int distance);

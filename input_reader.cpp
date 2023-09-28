@@ -58,27 +58,21 @@ std::pair <std::deque <string>, bool> SplitBusStop (string_view text_all) {
 }
 
 bool CheckStops (transcat::TransportCatalogue& cat, std::deque<string>& res_deq, TransportCatalogue::Bus& out) {
-    const auto& stops = cat.GiveMeStops();
-    bool check = false;
-    
+    bool check = true;
     for (auto& str : res_deq) {
-        check = false;
-        for (auto& stop:stops) {
-            if (str == stop.name){
-                
-                (out.bus_stops).push_back( &stop );
-                check = true;
-                break;
-            }
+        auto stop = cat.FindStop (str);
+        if ( stop == nullptr) {
+            check = false;
+            break;
         }
-        if (!check) {break;}
+        (out.bus_stops).push_back( stop );
     }   
     if (!check) {
         out.bus_stops.clear();
     }
     return check;
 }
-void BusInput (transcat::TransportCatalogue& cat, waiting_bus& buses_wait_add, 
+void BusInput (std::ostream& output_cout, transcat::TransportCatalogue& cat, waiting_bus& buses_wait_add, 
                std::string& line) {
         TransportCatalogue::Bus result;
         auto pos_end_name = line.find_first_of(':');
@@ -94,7 +88,7 @@ void BusInput (transcat::TransportCatalogue& cat, waiting_bus& buses_wait_add,
             
            // auto bus_find = cat.FindBus(bus_name);
             auto out_res = cat.GetBusInfo (bus_name);
-            DateOutput (out_res);
+            DateOutput (output_cout, out_res);
 
         }
         else {
@@ -117,7 +111,7 @@ void BusInput (transcat::TransportCatalogue& cat, waiting_bus& buses_wait_add,
             }
         }
 }
-void StopInput (transcat::TransportCatalogue& cat, dist_wait& dist_waiting_add, std::string& line) {
+void StopInput (std::ostream& output_cout, transcat::TransportCatalogue& cat, dist_wait& dist_waiting_add, std::string& line) {
         TransportCatalogue::Stop result;
         line = line.substr(5);
         auto pos_end_name = line.find_first_of(':');
@@ -129,7 +123,7 @@ void StopInput (transcat::TransportCatalogue& cat, dist_wait& dist_waiting_add, 
         if (split_coor == std::string::npos) {
                 
             auto info = cat.GetStopInfo (stop_name); 
-            DateOutput (info);
+            DateOutput (output_cout, info);
           
         } 
         else {
@@ -187,7 +181,7 @@ void StopInput (transcat::TransportCatalogue& cat, dist_wait& dist_waiting_add, 
 }
 
 
-void Load(transcat::TransportCatalogue& cat, std::istream& input) {
+void Load(transcat::TransportCatalogue& cat, std::istream& input, std::ostream& output_cout) {
     while (input.peek() != EOF){ 
         std::string num;
         std::getline(input, num);
@@ -201,10 +195,10 @@ void Load(transcat::TransportCatalogue& cat, std::istream& input) {
                 std::string type_op = line.substr(0, 4);
             
                 if (type_op == "Bus "s) {
-                    BusInput (cat, buses_wait_add, line);
+                    BusInput (output_cout, cat, buses_wait_add, line);
                 } 
                 else if (type_op == "Stop"s) {
-                    StopInput (cat,dist_waiting_add, line);
+                    StopInput (output_cout, cat,dist_waiting_add, line);
                 }
             }
             if (i == 1) {break;}

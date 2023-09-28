@@ -9,6 +9,6 @@ using namespace std::literals;
 
 namespace transcat::input {
 
-void Load(transcat::TransportCatalogue& cat, std::istream& input);
+void Load(transcat::TransportCatalogue& cat, std::istream& input, std::ostream& output_cout);
 
 } //конец namespace Transcat

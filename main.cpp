@@ -9,12 +9,8 @@ using namespace transcat;
 
 int main() {
 
-TransportCatalogue catalog;
-
+    TransportCatalogue catalog;
 //  std::ifstream input("tsA_case1_input.txt");
-//  Load (catalog, input);
-
-Load (catalog, std::cin);
- 
-
+//  Load (catalog, input, std::cout);
+    Load (catalog, std::cin, std::cout);
 }
