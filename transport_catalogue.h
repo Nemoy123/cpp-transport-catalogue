@@ -6,23 +6,15 @@
 #include <unordered_set>
 #include "geo.h"
 
-
 namespace transcat {
 
-
-
 class TransportCatalogue {
-
-
-
 public:
     struct Stop;
     struct Bus;
     struct Stop {
         std::string name;
         Coordinates xy;
-        
-        
     };
 
     struct Bus {
@@ -39,17 +31,15 @@ public:
     void GetStopInfo (std::ostream &s, const std::string_view stop_name, const Stop* stop);
     void InputDistance (const Stop* stopA, const Stop* stopB, const int distance);
     double GetDistance (const Stop* stopA, const Stop* stopB);
-
     std::unordered_map <std::string_view, const Stop*> GetMap() const {return map_stops_;}
     
 private:
-    
     std::deque <Stop> all_stops_;
     std::deque <Bus> all_buses_;
     std::unordered_map <std::string_view, const Stop*> map_stops_;
     std::unordered_map <std::string_view, const Bus*> map_buses_;
     std::unordered_map <const Stop*, std::unordered_set <const Bus*>> buses_for_stop_;
-
+    
     struct Hash {
         size_t operator() (const std::pair<const Stop*, const Stop*>& doom) const {
             size_t x =  (size_t)doom.first;
@@ -58,8 +48,6 @@ private:
         }
     };
     std::unordered_map <std::pair<const Stop*, const Stop*>, int, Hash> distance_stops;
-    
-
 };
 
 } //конец namespace Transcat

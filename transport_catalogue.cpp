@@ -39,10 +39,10 @@ void TransportCatalogue::GetBusInfo (std::ostream &s, std::string_view bus_name,
         size_t uniq = std::set <const Stop*> ( bus->bus_stops.begin(), bus->bus_stops.end() ).size();
         double dist = 0;
         double real_distance = 0;
-            for (size_t a =0; a+1 < bus->bus_stops.size(); ++a) {
+            for (size_t aborvalg = 0; aborvalg+1 < bus->bus_stops.size(); ++aborvalg) {
                 
-                    dist += ComputeDistance (bus->bus_stops[a]->xy, bus->bus_stops[a+1]->xy);
-                    real_distance += GetDistance (bus->bus_stops[a], bus->bus_stops[a+1]);
+                    dist += ComputeDistance (bus->bus_stops[aborvalg]->xy, bus->bus_stops[aborvalg + 1]->xy);
+                    real_distance += GetDistance (bus->bus_stops[aborvalg], bus->bus_stops[aborvalg + 1]);
             }
             
         double curv = real_distance/dist;
