@@ -4,6 +4,8 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <set>
+#include <map>
 #include "geo.h"
 
 namespace transcat {
@@ -27,8 +29,8 @@ public:
     const Stop* FindStop (const std::string_view stop);
     const Bus* FindBus (const std::string_view bus);
     std::deque <Stop>& GiveMeStops () {return all_stops_;}
-    void GetBusInfo (std::ostream &s, const std::string_view bus_name, const Bus* bus);
-    void GetStopInfo (std::ostream &s, const std::string_view stop_name, const Stop* stop);
+    std::tuple <std::string_view, std::size_t, std::size_t, double, double> GetBusInfo (const std::string_view bus_name);
+    std::map <int, std::string> GetStopInfo (const std::string_view stop_name);
     void InputDistance (const Stop* stopA, const Stop* stopB, const int distance);
     double GetDistance (const Stop* stopA, const Stop* stopB);
     std::unordered_map <std::string_view, const Stop*> GetMap() const {return map_stops_;}

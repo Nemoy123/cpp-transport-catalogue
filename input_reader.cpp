@@ -92,8 +92,10 @@ void BusInput (transcat::TransportCatalogue& cat, waiting_bus& buses_wait_add,
         auto res_deq { SplitBusStop (line.substr(pos_end_name+1)) };
         if (res_deq.first.empty()) {
             
-            auto bus_find = cat.FindBus(bus_name);
-            cat.GetBusInfo (DateOutput(), bus_name, bus_find);
+           // auto bus_find = cat.FindBus(bus_name);
+            auto out_res = cat.GetBusInfo (bus_name);
+            DateOutput (out_res);
+
         }
         else {
 
@@ -126,7 +128,8 @@ void StopInput (transcat::TransportCatalogue& cat, dist_wait& dist_waiting_add, 
         // проверка на запрос информации по остановке
         if (split_coor == std::string::npos) {
                 
-                cat.GetStopInfo (DateOutput(), stop_name, cat.FindStop (stop_name));  
+            auto info = cat.GetStopInfo (stop_name); 
+            DateOutput (info);
           
         } 
         else {

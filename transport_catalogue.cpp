@@ -1,5 +1,6 @@
 #include "transport_catalogue.h"
 #include <set>
+#include <map>
 
 using namespace std;
 
@@ -29,48 +30,56 @@ void TransportCatalogue::AddBusRoute (const Bus& bus) {
         map_buses_.insert({all_buses_.back().name, &all_buses_.back()});
 }
 
-void TransportCatalogue::GetBusInfo (std::ostream &s, std::string_view bus_name, const Bus* bus) {
+std::tuple <std::string_view, size_t, size_t, double, double> TransportCatalogue::GetBusInfo (const std::string_view bus_name) {
+    auto bus = FindBus (bus_name);
+    std::tuple <std::string_view, size_t, size_t, double, double> result;
     
     if (bus == nullptr) {
-        s <<"Bus "s << bus_name << ": not found"s << std::endl;
+        return {bus_name, static_cast <size_t>(0), static_cast <size_t>(0), static_cast <double>(0), static_cast <double>(0)};
     }
     else {
         size_t count = bus->bus_stops.size();
         size_t uniq = std::set <const Stop*> ( bus->bus_stops.begin(), bus->bus_stops.end() ).size();
         double dist = 0;
         double real_distance = 0;
-            for (size_t aborvalg = 0; aborvalg+1 < bus->bus_stops.size(); ++aborvalg) {
+            // вернулись к однобуквенному обозначению
+            for (size_t i = 0; i+1 < bus->bus_stops.size(); ++i) {
                 
-                    dist += ComputeDistance (bus->bus_stops[aborvalg]->xy, bus->bus_stops[aborvalg + 1]->xy);
-                    real_distance += GetDistance (bus->bus_stops[aborvalg], bus->bus_stops[aborvalg + 1]);
+                    dist += ComputeDistance (bus->bus_stops[i]->xy, bus->bus_stops[i + 1]->xy);
+                    real_distance += GetDistance (bus->bus_stops[i], bus->bus_stops[i + 1]);
             }
-            
         double curv = real_distance/dist;
-        s <<"Bus "s << bus_name <<": "s << count ;
-        s << " stops on route, "s << uniq << " unique stops, "s << real_distance << " route length, "s
-          << curv <<" curvature"<< std::endl;
+        return {bus_name, count, uniq, real_distance, curv};
     }
 }
+std::map <int, std::string> TransportCatalogue::GetStopInfo (const std::string_view stop_name) {
 
-void TransportCatalogue::GetStopInfo (std::ostream &s, const std::string_view stop_name, const Stop* stop) {
-    s <<"Stop "s << stop_name<<": "s;
+    const auto stop = FindStop (stop_name);
+    std::string name {stop_name};
     if (stop == nullptr) {
-        s  << "not found"s << std::endl;
+        std::string not_find = "not found"s;
+        return {{0, name}, {1, not_find}};
     }
     else {
         if (buses_for_stop_[stop].size() > 0) {
-            s << "buses"s ;
-            set <string_view> result;
+
+            std::map <int, string> result = {{0, name}, {1,{}}};
+            std::set <std::string> temp_set;
+            int i = 2;
             for (const auto bus : buses_for_stop_[stop]) {
-                result.insert(bus->name);
+                temp_set.insert(bus->name);
             }
-            for (const auto res : result) {
-               s << " "s << res;
+
+            for (const auto bus_name : temp_set) {
+                result.insert({i, bus_name});
+                ++i;
             }
-            s<< std::endl;
+            
+            return result;
         }
         else {
-            s  << "no buses"s << std::endl;
+            std::string no_bus = "no buses"s;
+            return {{0, name}, {1, no_bus}};
         }
     }
 }
