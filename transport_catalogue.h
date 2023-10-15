@@ -1,4 +1,5 @@
 #pragma once
+
 #include <iostream>
 #include <deque>
 #include <string>
@@ -16,7 +17,7 @@ public:
     struct Bus;
     struct Stop {
         std::string name;
-        Coordinates xy;
+        geo::Coordinates xy;
     };
 
     struct Bus {
@@ -33,6 +34,7 @@ public:
     void InputDistance (const Stop* stopA, const Stop* stopB, const int distance);
     double GetDistance (const Stop* stopA, const Stop* stopB);
     std::unordered_map <std::string_view, const Stop*> GetMap() const {return map_stops_;}
+    std::unordered_map <std::string_view, const Bus*> GetRoutes() const {return map_buses_;}
     
 private:
     std::deque <Stop> all_stops_;

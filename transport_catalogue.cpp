@@ -38,12 +38,15 @@ std::tuple <std::string_view, size_t, size_t, double, double> TransportCatalogue
         return {bus_name, static_cast <size_t>(0), static_cast <size_t>(0), static_cast <double>(0), static_cast <double>(0)};
     }
     else {
-        size_t count = bus->bus_stops.size();
+        // size_t count = 0;
+        // if (!bus->ring) {count = (bus->bus_stops.size())*2-1;}
+        // else {count = (bus->bus_stops.size());}
+        size_t count = (bus->bus_stops.size());
         size_t uniq = std::set <const Stop*> ( bus->bus_stops.begin(), bus->bus_stops.end() ).size();
         double dist = 0;
         double real_distance = 0;
-            // вернулись к однобуквенному обозначению
-            for (size_t i = 0; i+1 < bus->bus_stops.size(); ++i) {
+            
+            for (size_t i = 0; i+1 < count; ++i) {
                 
                     dist += ComputeDistance (bus->bus_stops[i]->xy, bus->bus_stops[i + 1]->xy);
                     real_distance += GetDistance (bus->bus_stops[i], bus->bus_stops[i + 1]);
