@@ -46,47 +46,8 @@ public:
     bool IsArray() const { return std::holds_alternative<Array>(value_); }; 
     bool IsMap() const { return std::holds_alternative<Dict>(value_); }; 
 
-    
-    bool operator==(const Node& rhs) const {
-        if (this->IsNull() && rhs.IsNull()) {
-            return true;
-        }
-        if (this->IsInt() && rhs.IsInt()) {
-           auto lhs_value = std::holds_alternative<int>(this->value_);
-           auto rhs_value = std::holds_alternative<int>(rhs.value_);
-           return lhs_value == rhs_value;
-        }
-        if (this->IsPureDouble() && rhs.IsPureDouble()) {
-           auto lhs_value = std::holds_alternative<double>(this->value_);
-           auto rhs_value = std::holds_alternative<double>(rhs.value_);
-           return lhs_value == rhs_value;
-        }
-        if (this->IsBool() && rhs.IsBool()) {
-           auto lhs_value = std::holds_alternative<bool>(this->value_);
-           auto rhs_value = std::holds_alternative<bool>(rhs.value_);
-           return lhs_value == rhs_value;
-        }
-        if (this->IsString() && rhs.IsString()) {
-           auto lhs_value = std::holds_alternative<std::string>(this->value_);
-           auto rhs_value = std::holds_alternative<std::string>(rhs.value_);
-           return lhs_value == rhs_value;
-        }
-        if (this->IsArray() && rhs.IsArray()) {
-           auto lhs_value = std::holds_alternative<Array>(this->value_);
-           auto rhs_value = std::holds_alternative<Array>(rhs.value_);
-           return lhs_value == rhs_value;
-        }
-        if (this->IsMap() && rhs.IsMap()) {
-           auto lhs_value = std::holds_alternative<Dict>(this->value_);
-           auto rhs_value = std::holds_alternative<Dict>(rhs.value_);
-           return lhs_value == rhs_value;
-        }
-    
-        return false;
-    }
-    bool operator!=(const Node& rhs) const {
-        return !(*this == rhs);
-    }
+    bool operator==(const Node& rhs) const;
+    bool operator!=(const Node& rhs) const { return !(*this == rhs);}
 
     int AsInt() const;
     bool AsBool() const;

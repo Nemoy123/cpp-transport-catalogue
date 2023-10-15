@@ -3,12 +3,15 @@
 #include <string>
 #include <unordered_map>
 #include <algorithm>
+#include "domain.h"
 
 using namespace std::literals;
 using namespace json;
+namespace json::read {
 
-void StopsCheck (transcat::TransportCatalogue& catalog, std::unordered_map <std::string, std::set<std::pair <std::string, int>>>& waiting_stop_distance, const Node& element_map){
-        transcat::TransportCatalogue::Stop stop;
+void JSONReader::StopsCheck (  std::unordered_map <std::string, std::set<std::pair <std::string, int>>>& waiting_stop_distance, 
+                const Node& element_map ) {
+       Stop stop;
         auto it = element_map.AsMap().find("name"s);
         if (it != element_map.AsMap().end()) {
             stop.name = it->second.AsString();
@@ -22,7 +25,7 @@ void StopsCheck (transcat::TransportCatalogue& catalog, std::unordered_map <std:
             stop.xy.lng = it->second.AsDouble();
         }
         //добавить остановку перед проверкой дистанций
-        catalog.AddStop(stop);
+        cat_.AddStop(stop);
 
         it = element_map.AsMap().find("road_distances"s);
         if (it != element_map.AsMap().end()) {
@@ -31,8 +34,8 @@ void StopsCheck (transcat::TransportCatalogue& catalog, std::unordered_map <std:
             //проверить наличие остановок, если что запихнуть в очередь
             auto map_dist = it->second.AsMap();
             for (const auto& [name_d, dist] : map_dist){
-                    if (catalog.FindStop(name_d) != nullptr) {
-                        catalog.InputDistance(catalog.FindStop(stop.name), catalog.FindStop(name_d), dist.AsInt());
+                    if (cat_.FindStop(name_d) != nullptr) {
+                        cat_.InputDistance(cat_.FindStop(stop.name), cat_.FindStop(name_d), dist.AsInt());
                     }
                     else {
                         
@@ -44,8 +47,8 @@ void StopsCheck (transcat::TransportCatalogue& catalog, std::unordered_map <std:
 
 }
 
-void BusesCheck (transcat::TransportCatalogue& catalog, const Node& element_map){
-    transcat::TransportCatalogue::Bus bus;
+void JSONReader::BusesCheck (const Node& element_map){
+    Bus bus;
     auto it = element_map.AsMap().find("name"s);
     if (it != element_map.AsMap().end()) {
         bus.name = it->second.AsString();
@@ -64,23 +67,23 @@ void BusesCheck (transcat::TransportCatalogue& catalog, const Node& element_map)
             temp.pop_front();
 
             for (auto& stop : array) {
-                bus.bus_stops.push_back(catalog.FindStop(stop.AsString()));
+                bus.bus_stops.push_back(cat_.FindStop(stop.AsString()));
             }
             for (auto& stop : temp) {
-                bus.bus_stops.push_back(catalog.FindStop(stop.AsString()));
+                bus.bus_stops.push_back(cat_.FindStop(stop.AsString()));
             }
         }
         else {
             for (auto& stop : array) {
-                bus.bus_stops.push_back(catalog.FindStop(stop.AsString()));
+                bus.bus_stops.push_back(cat_.FindStop(stop.AsString()));
             }
         }
     }
-    catalog.AddBusRoute(bus);
+    cat_.AddBusRoute(bus);
 }
 
 
-void FindStopsBuses (transcat::TransportCatalogue& catalog, std::deque <Document> documents) {
+void JSONReader::FindStopsBuses ( std::deque <Document> documents) {
     std::unordered_map <std::string, std::set<std::pair <std::string, int>>> waiting_stop_distance;
     for (auto& doc: documents) {
         const json::Node* temp1 = &doc.GetRoot();
@@ -111,7 +114,7 @@ void FindStopsBuses (transcat::TransportCatalogue& catalog, std::deque <Document
                 std::string stop_check = it->second.AsString();
                 if (stop_check == "Stop"s){
                    // std::cout << "Stop found"<< std::endl;
-                    StopsCheck (catalog, waiting_stop_distance, element_map);
+                    StopsCheck (waiting_stop_distance, element_map);
                 }
             }
         }
@@ -120,10 +123,10 @@ void FindStopsBuses (transcat::TransportCatalogue& catalog, std::deque <Document
                 all_stop_add = 0;
                 for (auto& stop_w : waiting_stop_distance) {
                     for (auto& [stop1, stop2_d] : stop_w.second) {
-                        auto stop1_uk = catalog.FindStop(stop_w.first);
-                        auto stop2_uk = catalog.FindStop(stop1);
+                        auto stop1_uk = cat_.FindStop(stop_w.first);
+                        auto stop2_uk = cat_.FindStop(stop1);
                         if (stop1_uk != nullptr && stop2_uk != nullptr) {
-                            catalog.InputDistance(stop1_uk, stop2_uk, stop2_d);
+                            cat_.InputDistance(stop1_uk, stop2_uk, stop2_d);
                         }
                         else {++all_stop_add;}
                     }
@@ -136,14 +139,14 @@ void FindStopsBuses (transcat::TransportCatalogue& catalog, std::deque <Document
                 std::string stop_check = it->second.AsString();
                 if (stop_check == "Bus"s) {
                     //std::cout << "Bus found"<< std::endl;
-                    BusesCheck (catalog, element_map);    
+                    BusesCheck (element_map);    
                 }
             }
         }
     }
 }
 
-std::deque <request::RequestHandler::Request> ReadRequest ( std::deque <Document> documents) {
+std::deque <request::RequestHandler::Request> JSONReader::ReadRequest ( std::deque <Document> documents) {
     std::deque <request::RequestHandler::Request> result;
     for (auto& doc: documents) {
         const json::Node* temp1 = &doc.GetRoot();
@@ -177,13 +180,13 @@ std::deque <request::RequestHandler::Request> ReadRequest ( std::deque <Document
     return result;
 }
 
-std::string MakeRGB (int red, int green, int blue) {
+std::string JSONReader::MakeRGB (int red, int green, int blue) {
         std::stringstream sstm;
         sstm << "rgb("sv << static_cast <int> (red) << ","sv << static_cast <int> (green) << ","sv<< static_cast <int> (blue) << ")"sv;
          return {sstm.str()};
 }
 
-std::string MakeRGBA (int red, int green, int blue, double opacity) {
+std::string JSONReader::MakeRGBA (int red, int green, int blue, double opacity) {
         std::stringstream sstm;
         sstm << "rgba("sv << static_cast <int> (red) << ","sv 
              << static_cast <int> (green) << ","sv<< static_cast <int> (blue) 
@@ -191,7 +194,7 @@ std::string MakeRGBA (int red, int green, int blue, double opacity) {
         return {sstm.str()};
 }
 
-std::string MakeColor (json::Node color) {
+std::string JSONReader::MakeColor (json::Node color) {
     if (color.IsString()) {
          return color.AsString();
     }
@@ -216,8 +219,8 @@ std::string MakeColor (json::Node color) {
 } 
 
 
-Render_settings ReadRenderSettings (const std::deque <Document>& raw_documents) {
-    Render_settings render_settings;
+void JSONReader::ReadRenderSettings (const std::deque <Document>& raw_documents) {
+    RenderSettings render_settings;
     for (auto& doc: raw_documents) {
         const json::Node* temp1 = &doc.GetRoot();
         if (!temp1->IsMap()) {
@@ -225,7 +228,7 @@ Render_settings ReadRenderSettings (const std::deque <Document>& raw_documents) 
         }
         auto map_upper_level = (temp1->AsMap());
         auto it_map_ul = (map_upper_level).find("render_settings"s);
-        if (it_map_ul == (map_upper_level).end()) { return {};}
+        if (it_map_ul == (map_upper_level).end()) { return;}
         auto map_base_render = (it_map_ul->second).AsMap();
         for (const auto& [name, second] : map_base_render)  {
             if      (name == "width"s) { render_settings.width = second.AsDouble(); }
@@ -235,13 +238,13 @@ Render_settings ReadRenderSettings (const std::deque <Document>& raw_documents) 
             else if (name == "stop_radius"s) { render_settings.stop_radius = second.AsDouble(); }
             else if (name == "bus_label_font_size"s) { render_settings.bus_label_font_size = second.AsInt(); }
             else if (name == "bus_label_offset"s) {
-               render_settings.bus_label_offset.one = second.AsArray().at(0).AsDouble();
-               render_settings.bus_label_offset.two = second.AsArray().at(1).AsDouble();
+               render_settings.bus_label_offset.dx = second.AsArray().at(0).AsDouble();
+               render_settings.bus_label_offset.dy = second.AsArray().at(1).AsDouble();
             }
             else if (name == "stop_label_font_size"s) { render_settings.stop_label_font_size = second.AsInt(); }
             else if (name == "stop_label_offset"s) {
-               render_settings.stop_label_offset.one = second.AsArray().at(0).AsDouble();
-               render_settings.stop_label_offset.two = second.AsArray().at(1).AsDouble();     
+               render_settings.stop_label_offset.dx = second.AsArray().at(0).AsDouble();
+               render_settings.stop_label_offset.dy = second.AsArray().at(1).AsDouble();     
             }
             else if (name == "underlayer_color"s) {
                 render_settings.underlayer_color = MakeColor (second);
@@ -260,30 +263,30 @@ Render_settings ReadRenderSettings (const std::deque <Document>& raw_documents) 
         }
 
     }
-    return render_settings;
+    render_settings_ = (std::move (render_settings));
 }
 
 
-std::pair <std::deque <request::RequestHandler::Request>, Render_settings> json::read::LoadJSON (transcat::TransportCatalogue& cat, std::istream& input) {
-    //Render_settings render_settings;
+void json::read::JSONReader::LoadJSON () {
+    
     std::deque <Document> raw_documents;
     
-    while (input.peek() != EOF) {
+    while (input_.peek() != EOF) {
         
-        Document temp_doc = json::Load(input);
+        Document temp_doc = json::Load(input_);
         if (!temp_doc.empty()) {raw_documents.push_back (temp_doc);}
         
     }
     
-    FindStopsBuses (cat, raw_documents);
-    Render_settings render_settings = ReadRenderSettings(raw_documents);
-    auto result = ReadRequest ( raw_documents);
-    return {result, render_settings};
+    FindStopsBuses (raw_documents);
+    ReadRenderSettings(raw_documents);
+    //auto result = ReadRequest ( raw_documents);
+    requests_ = ReadRequest ( raw_documents);
+    //return {result, render_settings};
     // return {};
 }
 
-Dict json::read::FormatANswerToJson (transcat::TransportCatalogue& cat, 
-                                    request::RequestHandler::Answer& answer, RequestHandler& face) {
+Dict json::read::JSONReader::FormatANswerToJson (request::RequestHandler::Answer& answer) {
     Dict result;
     Array bus_set;
     result.insert ({"request_id"s, Node (answer.id)});
@@ -311,16 +314,16 @@ Dict json::read::FormatANswerToJson (transcat::TransportCatalogue& cat,
         if (answer.not_found_buses) {
             result.insert ({"error_message"s, Node ("not found"s)});
         }else {
-            auto date = cat.GetBusInfo (answer.name);
+            auto date = cat_.GetBusInfo (answer.name);
             //bus_name, count, uniq, real_distance, curv
-            result.insert ( {"stop_count"s, Node ( static_cast<int>(std::get<1>(date)))} );
-            result.insert ( {"unique_stop_count"s, Node ( static_cast<int>(std::get<2>(date)))} );
-            result.insert ( {"route_length"s, Node ( std::get<3>(date))} );
-            result.insert ( {"curvature"s, Node ( std::get<4>(date))} );
+            result.insert ( {"stop_count"s, Node ( static_cast<int> (date.count_stops) )} );
+            result.insert ( {"unique_stop_count"s, Node ( static_cast<int> (date.uniq_stops) )} );
+            result.insert ( {"route_length"s, Node ( date.real_dist )} );
+            result.insert ( {"curvature"s, Node ( date.curv )} );
         }
     }
     if (answer.type == "Map"s) {
-        auto docum = face.RenderMap();
+        auto docum = face_.RenderMap();
         std::stringstream map_output;
         docum.Render(map_output);
         
@@ -328,3 +331,6 @@ Dict json::read::FormatANswerToJson (transcat::TransportCatalogue& cat,
     }
     return result;
 }
+
+
+} // namespace end

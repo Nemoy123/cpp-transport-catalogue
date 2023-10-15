@@ -12,6 +12,6 @@ int main() {
 //   std::ifstream input("input.json");
 //  request::LoadInput(input, output);
   
-request::LoadInput(std::cin, std::cout);
+ request::LoadInput(std::cin, std::cout);
 
 }

@@ -83,26 +83,23 @@ private:
 };
 
 
-class Color_palette {
+class ColorPalette {
 public:
     std::deque <std::string> color_palette;
     
     const std::string& operator[](const int index) const {
         if (index < static_cast<int> (color_palette.size())) return color_palette.at(index);
-        else  { //(index >= color_palette.size())
+        else  { 
             int size = static_cast<int> (color_palette.size());
             int temp =  index / size ; //  без дробной части
             int new_ind = (index - (size * temp));
             return color_palette.at(new_ind);
         }
     }
-   
-
-
 };
 
 
-struct Render_settings {
+struct RenderSettings {
     double width = 0;
     double height = 0;
     double padding = 0;
@@ -110,28 +107,42 @@ struct Render_settings {
     double stop_radius = 0;
     int bus_label_font_size = 0;
     
-    struct Bus_label_offset {
-        double one = 0;
-        double two = 0;
+    struct BusLabelOffset {
+        double dx = 0;
+        double dy = 0;
     };
-    Bus_label_offset bus_label_offset;
+    BusLabelOffset bus_label_offset;
     int stop_label_font_size = 0;
 
-    struct Stop_label_offset {
-        double one = 0;
-        double two = 0;
+    struct StopLabelOffset {
+        double dx = 0;
+        double dy = 0;
     };
-    Stop_label_offset stop_label_offset;
+    StopLabelOffset stop_label_offset;
     std::string underlayer_color;
     
     double underlayer_width = 0;
    
-    Color_palette color_palette;
+    ColorPalette color_palette;
 };
 
 
 
 
+class MapRender {
+    public:
+    MapRender (const RenderSettings& render_settings, const transcat::TransportCatalogue& db) :
+        render_settings_(render_settings),
+        db_(db)
+    {}
+    svg::Document MapRenderer () const;
+    
+    private:
 
+    const RenderSettings& render_settings_;
+    const transcat::TransportCatalogue& db_;
+
+
+};
 
 } // конец namespace

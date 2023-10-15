@@ -1,12 +1,16 @@
 #pragma once
-#include "map_renderer.h"
-#include "transport_catalogue.h"
 #include <optional>
 #include <set>
+#include "map_renderer.h"
+#include "domain.h"
+#include "transport_catalogue.h"
+//
+
 using BusStat = std::tuple <std::string_view, std::size_t, std::size_t, double, double>;
 
-
+//
 using namespace renderer;
+
 namespace request {
 
 
@@ -17,8 +21,6 @@ public:
         int id;
         std::string type;
         std::string name;
-
-
     };
 
     struct Answer {
@@ -30,14 +32,8 @@ public:
         bool not_found_buses = false;
     };
 
-    // {
-    // "buses": [ "14", "22к"],
-    // "request_id": 12345
-    // } 
-
     std::deque <Request> req_deq_ = {}; // очередь выполнения
     
-
     RequestHandler (transcat::TransportCatalogue& cat, std::istream& input, std::ostream& output) : 
                         db_(cat), 
                         input_(input), 
@@ -50,14 +46,20 @@ public:
     std::optional<BusStat> GetBusStat(const std::string_view& bus_name) const;
 
     // Возвращает маршруты, проходящие через
-    std::unordered_set<const transcat::TransportCatalogue::Bus*> GetBusesByStop(const std::string_view& stop_name) const;
+    std::unordered_set<const Bus*> GetBusesByStop(const std::string_view& stop_name) const;
 
     // Этот метод будет нужен в следующей части итогового проекта
     svg::Document RenderMap() const;
     
     void RequestRun ();
     void OutputRun();
-    Render_settings render_settings_;
+    RenderSettings render_settings_;
+    const transcat::TransportCatalogue& GetTransportBase () const { return db_; }
+    //void OutputRun(json::read::JSONReader& json_reeder); 
+    void MakeJSONReader ();
+    std::deque <Answer>& GetAnswerDeq () {return answer_deq_;}
+    std::ostream& GetOutput () {return output_;}
+    //void OutputRun(T& json_reeder);
 
 private:
     // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
@@ -67,10 +69,14 @@ private:
     std::ostream& output_;
     //const renderer::MapRenderer& renderer_;
     std::deque <Answer> answer_deq_ = {}; // очередь ответа
+    //json::read::JSONReader json_reeder_ = {db_, this, input_};
 
     
 
 };
+
+
+
 
 void LoadInput (std::istream& input, std::ostream& output);
 

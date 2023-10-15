@@ -6,12 +6,12 @@ using namespace std;
 
 namespace transcat {
 
-const TransportCatalogue::Stop* TransportCatalogue::FindStop (const std::string_view stop) {
+const Stop* TransportCatalogue::FindStop (const std::string_view stop) {
    const auto iter = map_stops_.find(stop);
     return iter != map_stops_.end() ? iter->second : nullptr;
 }
 
-const TransportCatalogue::Bus* TransportCatalogue::FindBus (const std::string_view bus){
+const Bus* TransportCatalogue::FindBus (const std::string_view bus){
     const auto iter = map_buses_.find(bus);
     return iter != map_buses_.end() ? iter->second : nullptr;
 }
@@ -30,17 +30,15 @@ void TransportCatalogue::AddBusRoute (const Bus& bus) {
         map_buses_.insert({all_buses_.back().name, &all_buses_.back()});
 }
 
-std::tuple <std::string_view, size_t, size_t, double, double> TransportCatalogue::GetBusInfo (const std::string_view bus_name) {
+BusInfo TransportCatalogue::GetBusInfo (const std::string_view bus_name) {
     auto bus = FindBus (bus_name);
-    std::tuple <std::string_view, size_t, size_t, double, double> result;
-    
+    //std::tuple <std::string_view, size_t, size_t, double, double> result;
+    BusInfo result;
     if (bus == nullptr) {
-        return {bus_name, static_cast <size_t>(0), static_cast <size_t>(0), static_cast <double>(0), static_cast <double>(0)};
+        return {bus_name, 0, 0, 0, 0};
     }
     else {
-        // size_t count = 0;
-        // if (!bus->ring) {count = (bus->bus_stops.size())*2-1;}
-        // else {count = (bus->bus_stops.size());}
+        
         size_t count = (bus->bus_stops.size());
         size_t uniq = std::set <const Stop*> ( bus->bus_stops.begin(), bus->bus_stops.end() ).size();
         double dist = 0;

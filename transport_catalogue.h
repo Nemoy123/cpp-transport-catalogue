@@ -8,34 +8,25 @@
 #include <set>
 #include <map>
 #include "geo.h"
+#include "domain.h"
 
 namespace transcat {
 
 class TransportCatalogue {
 public:
-    struct Stop;
-    struct Bus;
-    struct Stop {
-        std::string name;
-        geo::Coordinates xy;
-    };
-
-    struct Bus {
-        std::string name;
-        std::deque <const Stop*> bus_stops;
-        bool ring;
-    };
+   
     void AddStop (const Stop& stop);
     void AddBusRoute (const Bus& bus);
     const Stop* FindStop (const std::string_view stop);
     const Bus* FindBus (const std::string_view bus);
-    std::tuple <std::string_view, std::size_t, std::size_t, double, double> GetBusInfo (const std::string_view bus_name);
+    BusInfo GetBusInfo (const std::string_view bus_name);
     std::map <int, std::string> GetStopInfo (const std::string_view stop_name);
     void InputDistance (const Stop* stopA, const Stop* stopB, const int distance);
     double GetDistance (const Stop* stopA, const Stop* stopB);
-    std::unordered_map <std::string_view, const Stop*> GetMap() const {return map_stops_;}
-    std::unordered_map <std::string_view, const Bus*> GetRoutes() const {return map_buses_;}
-    
+    const std::unordered_map <std::string_view, const Stop*>& GetMap() const {return map_stops_;}
+    const std::unordered_map <std::string_view, const Bus*>& GetRoutes() const {return map_buses_;}
+
+
 private:
     std::deque <Stop> all_stops_;
     std::deque <Bus> all_buses_;
