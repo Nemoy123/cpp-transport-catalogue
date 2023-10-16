@@ -9,7 +9,7 @@ using namespace std::literals;
 using namespace json;
 namespace json::read {
 
-void JSONReader::StopsCheck (  std::unordered_map <std::string, std::set<std::pair <std::string, int>>>& waiting_stop_distance, 
+void JSONReader::FillStop (  std::unordered_map <std::string, std::set<std::pair <std::string, int>>>& waiting_stop_distance, 
                 const Node& element_map ) {
        Stop stop;
         auto it = element_map.AsMap().find("name"s);
@@ -47,7 +47,7 @@ void JSONReader::StopsCheck (  std::unordered_map <std::string, std::set<std::pa
 
 }
 
-void JSONReader::BusesCheck (const Node& element_map){
+void JSONReader::FillBus (const Node& element_map){
     Bus bus;
     auto it = element_map.AsMap().find("name"s);
     if (it != element_map.AsMap().end()) {
@@ -83,9 +83,9 @@ void JSONReader::BusesCheck (const Node& element_map){
 }
 
 
-void JSONReader::FindStopsBuses ( std::deque <Document> documents) {
+void JSONReader::FillCatalogue (const std::deque <Document>& documents) {
     std::unordered_map <std::string, std::set<std::pair <std::string, int>>> waiting_stop_distance;
-    for (auto& doc: documents) {
+    for (const auto& doc: documents) {
         const json::Node* temp1 = &doc.GetRoot();
         bool test_clear_buses = false;
         if (!temp1->IsMap()) {
@@ -114,7 +114,7 @@ void JSONReader::FindStopsBuses ( std::deque <Document> documents) {
                 std::string stop_check = it->second.AsString();
                 if (stop_check == "Stop"s){
                    // std::cout << "Stop found"<< std::endl;
-                    StopsCheck (waiting_stop_distance, element_map);
+                    FillStop (waiting_stop_distance, element_map);
                 }
             }
         }
@@ -139,7 +139,7 @@ void JSONReader::FindStopsBuses ( std::deque <Document> documents) {
                 std::string stop_check = it->second.AsString();
                 if (stop_check == "Bus"s) {
                     //std::cout << "Bus found"<< std::endl;
-                    BusesCheck (element_map);    
+                    FillBus (element_map);    
                 }
             }
         }
@@ -278,7 +278,7 @@ void json::read::JSONReader::LoadJSON () {
         
     }
     
-    FindStopsBuses (raw_documents);
+    FillCatalogue (raw_documents);
     ReadRenderSettings(raw_documents);
     //auto result = ReadRequest ( raw_documents);
     requests_ = ReadRequest ( raw_documents);
@@ -286,7 +286,7 @@ void json::read::JSONReader::LoadJSON () {
     // return {};
 }
 
-Dict json::read::JSONReader::FormatANswerToJson (request::RequestHandler::Answer& answer) {
+Dict json::read::JSONReader::FormatAnsertToJSON (request::RequestHandler::Answer& answer) {
     Dict result;
     Array bus_set;
     result.insert ({"request_id"s, Node (answer.id)});

@@ -24,7 +24,7 @@ struct Bus {
         std::string name;
         std::deque <const Stop*> bus_stops;
         bool ring;
-    };
+};
 
 struct BusInfo {
     std::string_view name;

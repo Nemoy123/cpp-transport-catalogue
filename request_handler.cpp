@@ -10,7 +10,7 @@ using namespace json;
 
 namespace request {
 
-void RequestHandler::RequestRun () {
+void RequestHandler::ExecuteRequests () {
     
     for (auto& it : req_deq_) {
         Answer answer;
@@ -50,11 +50,11 @@ void RequestHandler::RequestRun () {
 
 
 template <typename T>
-void OutputRun( T& json_reeder, std::deque <request::RequestHandler::Answer>& answer_deq_, std::ostream& output_) {
+void OutputRun( T& json_reader, std::deque <request::RequestHandler::Answer>& answer_deq_, std::ostream& output_) {
     
     json::Array result;
     for (request::RequestHandler::Answer& ans : answer_deq_) {
-        json::Dict res = json_reeder.FormatANswerToJson (ans);
+        json::Dict res = json_reader.FormatAnsertToJSON (ans);
         result.push_back(Node (res));
     }   
 
@@ -66,28 +66,25 @@ svg::Document RequestHandler::RenderMap() const {
     MapRender map_render (render_settings_, db_);
     return map_render.MapRenderer();
 }
-//  void RequestHandler::MakeJSONReader () {
-//      json::read::JSONReader json_reeder (db_, this, input_);
-//      json_reeder_ = json_reeder;
-//  }
+
 
 void LoadInput (std::istream& input_t, std::ostream& output) {
     transcat::TransportCatalogue cat;
     request::RequestHandler face (cat, input_t, output);
-    json::read::JSONReader json_reeder (cat, face, input_t);
-    json_reeder.LoadJSON();
+    json::read::JSONReader json_reader (cat, face, input_t);
+    json_reader.LoadJSON();
 
    //auto temp =  json::read::LoadJSON (cat, input_t);
 
-    face.req_deq_ = json_reeder.GiveRequests();
+    face.InputRequestDeque(json_reader.GiveRequests());
 // //    face.req_deq_ = temp.first;
 // //    face.render_settings_ = temp.second;
-    face.render_settings_ = json_reeder.GiveRenderSettings();
+    face.InputRenderSettings(json_reader.GiveRenderSettings());
 // //    auto docum = face.RenderMap();
-    MapRender map_render(face.render_settings_, face.GetTransportBase());
+    MapRender map_render(face.GetRenderSettings(), face.GetTransportBase());
 //     auto docum = map_render.MapRenderer ();
-     face.RequestRun ();
-     OutputRun(json_reeder, face.GetAnswerDeq(), face.GetOutput());
+     face.ExecuteRequests ();
+     OutputRun(json_reader, face.GetAnswerDeq(), face.GetOutput());
 }  
 
 } // end namespace 

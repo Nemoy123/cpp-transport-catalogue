@@ -32,7 +32,7 @@ public:
         bool not_found_buses = false;
     };
 
-    std::deque <Request> req_deq_ = {}; // очередь выполнения
+    
     
     RequestHandler (transcat::TransportCatalogue& cat, std::istream& input, std::ostream& output) : 
                         db_(cat), 
@@ -51,15 +51,14 @@ public:
     // Этот метод будет нужен в следующей части итогового проекта
     svg::Document RenderMap() const;
     
-    void RequestRun ();
-    void OutputRun();
-    RenderSettings render_settings_;
+    void ExecuteRequests ();
+    //void OutputRun();
     const transcat::TransportCatalogue& GetTransportBase () const { return db_; }
-    //void OutputRun(json::read::JSONReader& json_reeder); 
-    void MakeJSONReader ();
     std::deque <Answer>& GetAnswerDeq () {return answer_deq_;}
     std::ostream& GetOutput () {return output_;}
-    //void OutputRun(T& json_reeder);
+    void InputRequestDeque (std::deque <Request> inp) {req_deq_ = std::move(inp);}
+    void InputRenderSettings (RenderSettings rs) {render_settings_ = std::move(rs);}
+    const RenderSettings& GetRenderSettings() {return render_settings_;}
 
 private:
     // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
@@ -69,8 +68,9 @@ private:
     std::ostream& output_;
     //const renderer::MapRenderer& renderer_;
     std::deque <Answer> answer_deq_ = {}; // очередь ответа
-    //json::read::JSONReader json_reeder_ = {db_, this, input_};
-
+    //json::read::JSONReader json_reader_ = {db_, this, input_};
+    std::deque <Request> req_deq_ = {}; // очередь выполнения
+    RenderSettings render_settings_;
     
 
 };
