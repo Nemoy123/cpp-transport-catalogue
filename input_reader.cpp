@@ -1,6 +1,7 @@
 
 #include <string>
 #include <execution>
+#include "domain.h"
 #include "input_reader.h"
 #include "stat_reader.h"
 
@@ -13,7 +14,7 @@ using std::string_view;
 using namespace transcat::output;
 namespace transcat::input {
 
-using waiting_bus = std::deque <std::pair <TransportCatalogue::Bus, std::deque<std::string>>>;
+using waiting_bus = std::deque <std::pair <Bus, std::deque<std::string>>>;
 using dist_wait = std::deque <std::tuple <string, string, int>>;
 
 string_view PureString (string_view& line) {
@@ -57,7 +58,7 @@ std::pair <std::deque <string>, bool> SplitBusStop (string_view text_all) {
     return {result, round};
 }
 
-bool CheckStops (transcat::TransportCatalogue& cat, std::deque<string>& res_deq, TransportCatalogue::Bus& out) {
+bool CheckStops (transcat::TransportCatalogue& cat, std::deque<string>& res_deq, Bus& out) {
     bool check = true;
     for (auto& str : res_deq) {
         auto stop = cat.FindStop (str);
@@ -74,7 +75,7 @@ bool CheckStops (transcat::TransportCatalogue& cat, std::deque<string>& res_deq,
 }
 void BusInput (std::ostream& output_cout, transcat::TransportCatalogue& cat, waiting_bus& buses_wait_add, 
                std::string& line) {
-        TransportCatalogue::Bus result;
+        Bus result;
         auto pos_end_name = line.find_first_of(':');
         std::string bus_name ={};
         if (pos_end_name != std::string::npos) {
@@ -88,7 +89,7 @@ void BusInput (std::ostream& output_cout, transcat::TransportCatalogue& cat, wai
             
            // auto bus_find = cat.FindBus(bus_name);
             auto out_res = cat.GetBusInfo (bus_name);
-            DateOutput (output_cout, out_res);
+            transcat::output::DateOutput (output_cout, out_res);
 
         }
         else {
@@ -112,7 +113,7 @@ void BusInput (std::ostream& output_cout, transcat::TransportCatalogue& cat, wai
         }
 }
 void StopInput (std::ostream& output_cout, transcat::TransportCatalogue& cat, dist_wait& dist_waiting_add, std::string& line) {
-        TransportCatalogue::Stop result;
+        Stop result;
         line = line.substr(5);
         auto pos_end_name = line.find_first_of(':');
         
@@ -123,7 +124,7 @@ void StopInput (std::ostream& output_cout, transcat::TransportCatalogue& cat, di
         if (split_coor == std::string::npos) {
                 
             auto info = cat.GetStopInfo (stop_name); 
-            DateOutput (output_cout, info);
+            transcat::output::DateOutput (output_cout, info);
           
         } 
         else {
@@ -186,7 +187,7 @@ void Load(transcat::TransportCatalogue& cat, std::istream& input, std::ostream& 
         std::string num;
         std::getline(input, num);
         int i = std::stoi( move(num) );
-        std::deque <std::pair <TransportCatalogue::Bus, std::deque<string>>> buses_wait_add;
+        std::deque <std::pair <Bus, std::deque<string>>> buses_wait_add;
         std::deque <std::tuple <string, string, int>> dist_waiting_add;
         for (std::string line; std::getline(input, line);) {
             
