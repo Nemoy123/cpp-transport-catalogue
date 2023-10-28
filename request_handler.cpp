@@ -54,7 +54,8 @@ void OutputRun( T& json_reader, std::deque <request::RequestHandler::Answer>& an
     
     json::Array result;
     for (request::RequestHandler::Answer& ans : answer_deq_) {
-        json::Dict res = json_reader.FormatAnsertToJSON (ans);
+        //json::Dict res = json_reader.FormatAnsertToJSON (ans);
+        auto res = json_reader.FormatAnsertToJSONBuilder (ans);
         result.push_back(Node (res));
     }   
 

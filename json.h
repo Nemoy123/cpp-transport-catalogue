@@ -34,6 +34,7 @@ public:
     Node (Dict value): value_(value){}
 
     const Value& GetValue() const { return value_; }
+    Value& GetValue() { return value_; }
     
     bool IsInt() const { return std::holds_alternative<int>(value_); } 
     //IsDouble() Возвращает true, если в Node хранится int либо double.
@@ -44,7 +45,8 @@ public:
     bool IsString() const { return std::holds_alternative<std::string>(value_); }; 
     bool IsNull() const { return std::holds_alternative<std::nullptr_t>(value_); }; 
     bool IsArray() const { return std::holds_alternative<Array>(value_); }; 
-    bool IsMap() const { return std::holds_alternative<Dict>(value_); }; 
+    bool IsDict() const { return std::holds_alternative<Dict>(value_); }; 
+    //bool IsDict() const { return std::holds_alternative<Dict>(value_); }; 
 
     bool operator==(const Node& rhs) const;
     bool operator!=(const Node& rhs) const { return !(*this == rhs);}
@@ -54,7 +56,11 @@ public:
     double AsDouble() const; //Возвращает значение типа double, если внутри хранится double либо int. В последнем случае возвращается приведённое в double значение.
     const std::string& AsString() const;
     const Array& AsArray() const;
-    const Dict& AsMap() const;
+    Array& AsArray();
+    
+    const Dict& AsDict() const;
+    Dict& AsDict();
+
     bool empty() const {return value_.index() == 0;}
     
 

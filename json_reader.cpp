@@ -1,4 +1,5 @@
 #include "json_reader.h"
+#include "json_builder.h"
 #include <deque>
 #include <string>
 #include <unordered_map>
@@ -12,27 +13,27 @@ namespace json::read {
 void JSONReader::FillStop (  std::unordered_map <std::string, std::set<std::pair <std::string, int>>>& waiting_stop_distance, 
                 const Node& element_map ) {
        Stop stop;
-        auto it = element_map.AsMap().find("name"s);
-        if (it != element_map.AsMap().end()) {
+        auto it = element_map.AsDict().find("name"s);
+        if (it != element_map.AsDict().end()) {
             stop.name = it->second.AsString();
         }
-        it = element_map.AsMap().find("latitude"s);
-        if (it != element_map.AsMap().end()) {
+        it = element_map.AsDict().find("latitude"s);
+        if (it != element_map.AsDict().end()) {
             stop.xy.lat = it->second.AsDouble();
         }
-        it = element_map.AsMap().find("longitude"s);
-        if (it != element_map.AsMap().end()) {
+        it = element_map.AsDict().find("longitude"s);
+        if (it != element_map.AsDict().end()) {
             stop.xy.lng = it->second.AsDouble();
         }
         //добавить остановку перед проверкой дистанций
         cat_.AddStop(stop);
 
-        it = element_map.AsMap().find("road_distances"s);
-        if (it != element_map.AsMap().end()) {
+        it = element_map.AsDict().find("road_distances"s);
+        if (it != element_map.AsDict().end()) {
             //std::unordered_map <std::pair<const Stop*, const Stop*>, int, Hash> distance_stops;
             
             //проверить наличие остановок, если что запихнуть в очередь
-            auto map_dist = it->second.AsMap();
+            auto map_dist = it->second.AsDict();
             for (const auto& [name_d, dist] : map_dist){
                     if (cat_.FindStop(name_d) != nullptr) {
                         cat_.InputDistance(cat_.FindStop(stop.name), cat_.FindStop(name_d), dist.AsInt());
@@ -49,18 +50,18 @@ void JSONReader::FillStop (  std::unordered_map <std::string, std::set<std::pair
 
 void JSONReader::FillBus (const Node& element_map){
     Bus bus;
-    auto it = element_map.AsMap().find("name"s);
-    if (it != element_map.AsMap().end()) {
+    auto it = element_map.AsDict().find("name"s);
+    if (it != element_map.AsDict().end()) {
         bus.name = it->second.AsString();
     }
      
-     it = element_map.AsMap().find("is_roundtrip"s);
-    if (it != element_map.AsMap().end()) {
+     it = element_map.AsDict().find("is_roundtrip"s);
+    if (it != element_map.AsDict().end()) {
          bus.ring = it->second.AsBool();
     }
 
-    it = element_map.AsMap().find("stops"s);
-    if (it != element_map.AsMap().end()) {
+    it = element_map.AsDict().find("stops"s);
+    if (it != element_map.AsDict().end()) {
         auto array = it->second.AsArray();
         if (!bus.ring) {
             std::deque<Node> temp {array.rbegin(), array.rend()};
@@ -88,12 +89,12 @@ void JSONReader::FillCatalogue (const std::deque <Document>& documents) {
     for (const auto& doc: documents) {
         const json::Node* temp1 = &doc.GetRoot();
         bool test_clear_buses = false;
-        if (!temp1->IsMap()) {
+        if (!temp1->IsDict()) {
             
             std::cout << "Find error \n";
             auto test_array = temp1->AsArray();
             for ( auto& elem : test_array) {
-                auto test2 = elem.AsMap();
+                auto test2 = elem.AsDict();
                 auto bus_clear = test2.find("buses"s);
                 if ( bus_clear != test2.end()) {
                     test_clear_buses = true; // пропусть дальнейшее
@@ -102,15 +103,15 @@ void JSONReader::FillCatalogue (const std::deque <Document>& documents) {
             
         } 
         if (test_clear_buses)  {continue;}
-        auto map_upper_level = (temp1->AsMap());
+        auto map_upper_level = (temp1->AsDict());
         auto it_map_ul = (map_upper_level).find("base_requests"s);
         if (it_map_ul == (map_upper_level).end()) { return;}
         auto map_base_requests = (it_map_ul->second).AsArray();
         
         
         for (const auto& element_map  : map_base_requests)  {
-             auto it = element_map.AsMap().find("type"s);
-            if (it != element_map.AsMap().end()) {
+             auto it = element_map.AsDict().find("type"s);
+            if (it != element_map.AsDict().end()) {
                 std::string stop_check = it->second.AsString();
                 if (stop_check == "Stop"s){
                    // std::cout << "Stop found"<< std::endl;
@@ -134,8 +135,8 @@ void JSONReader::FillCatalogue (const std::deque <Document>& documents) {
         } while (all_stop_add != 0);
 
         for (const auto& element_map  : map_base_requests)  {
-             auto it = element_map.AsMap().find("type"s);
-            if (it != element_map.AsMap().end()) {
+             auto it = element_map.AsDict().find("type"s);
+            if (it != element_map.AsDict().end()) {
                 std::string stop_check = it->second.AsString();
                 if (stop_check == "Bus"s) {
                     //std::cout << "Bus found"<< std::endl;
@@ -150,26 +151,26 @@ std::deque <request::RequestHandler::Request> JSONReader::ReadRequest ( std::deq
     std::deque <request::RequestHandler::Request> result;
     for (auto& doc: documents) {
         const json::Node* temp1 = &doc.GetRoot();
-        if (!temp1->IsMap()) {
+        if (!temp1->IsDict()) {
             std::cout << "не валидный запрос\n";
         }
-        auto map_upper_level = (temp1->AsMap());
+        auto map_upper_level = (temp1->AsDict());
         auto it_map_ul = (map_upper_level).find("stat_requests"s);
         if (it_map_ul == (map_upper_level).end()) { return {};}
         auto array_base_requests = (it_map_ul->second).AsArray();
         for (const auto& map_req  : array_base_requests)  {
            request::RequestHandler::Request req_el;
-           auto it = map_req.AsMap().find("id");
-           if (it != map_req.AsMap().end()) {
+           auto it = map_req.AsDict().find("id");
+           if (it != map_req.AsDict().end()) {
                 req_el.id  = it->second.AsInt();
                 
            }
-            it = map_req.AsMap().find("type");
-           if (it != map_req.AsMap().end()) {
+            it = map_req.AsDict().find("type");
+           if (it != map_req.AsDict().end()) {
                 req_el.type = it->second.AsString();
            }
-            it = map_req.AsMap().find("name");
-            if (it != map_req.AsMap().end()) {
+            it = map_req.AsDict().find("name");
+            if (it != map_req.AsDict().end()) {
                 req_el.name = it->second.AsString();
            }
            result.push_back(req_el);
@@ -223,13 +224,13 @@ void JSONReader::ReadRenderSettings (const std::deque <Document>& raw_documents)
     RenderSettings render_settings;
     for (auto& doc: raw_documents) {
         const json::Node* temp1 = &doc.GetRoot();
-        if (!temp1->IsMap()) {
+        if (!temp1->IsDict()) {
             std::cout << "не валидный запрос\n";
         }
-        auto map_upper_level = (temp1->AsMap());
+        auto map_upper_level = (temp1->AsDict());
         auto it_map_ul = (map_upper_level).find("render_settings"s);
         if (it_map_ul == (map_upper_level).end()) { return;}
-        auto map_base_render = (it_map_ul->second).AsMap();
+        auto map_base_render = (it_map_ul->second).AsDict();
         for (const auto& [name, second] : map_base_render)  {
             if      (name == "width"s) { render_settings.width = second.AsDouble(); }
             else if (name == "height"s) { render_settings.height = second.AsDouble(); }
@@ -329,6 +330,67 @@ Dict json::read::JSONReader::FormatAnsertToJSON (request::RequestHandler::Answer
         
         result.insert ( { "map"s, Node {map_output.str()} } );
     }
+    return result;
+}
+
+Node json::read::JSONReader::FormatAnsertToJSONBuilder (request::RequestHandler::Answer& answer) {
+    //Dict result;
+   // Array bus_set;
+    Builder builder;
+    //result.insert ({"request_id"s, Node (answer.id)});
+    builder.StartDict().Key("request_id"s).Value(answer.id);
+
+    if (answer.type == "Stop"s) {
+        if (!answer.not_found_buses && !answer.not_found_stop) {
+            builder.Key("buses"s);
+            builder.StartArray();
+            for (const auto& bus : answer.ans_set) {
+                //bus_set.push_back(Node(bus));
+                builder.Value(bus);
+            }
+            builder.EndArray();
+            //result.insert ({"buses"s, Node (bus_set)});
+            
+        }
+        
+        else if (answer.not_found_buses) {
+            builder.Key("buses"s).StartArray().EndArray();
+            //result.insert ( { "buses"s, Node (bus_set) } );
+        }
+        // "error_message": "not found"
+        else if (answer.not_found_stop) {
+            builder.Key("error_message"s).Value("not found"s);
+            //result.insert ({"error_message"s, Node ("not found"s)});
+        }
+        
+    }
+
+    if (answer.type == "Bus"s) {
+        if (answer.not_found_buses) {
+            builder.Key("error_message"s).Value("not found"s);
+            //result.insert ({"error_message"s, Node ("not found"s)});
+        }else {
+            auto date = cat_.GetBusInfo (answer.name);
+            //bus_name, count, uniq, real_distance, curv
+            builder.Key("stop_count"s).Value(static_cast<int> (date.count_stops));
+            builder.Key("unique_stop_count"s).Value(static_cast<int> (date.uniq_stops));
+            builder.Key("route_length"s).Value(date.real_dist);
+            builder.Key("curvature"s).Value(date.curv);
+            // result.insert ( {"stop_count"s, Node ( static_cast<int> (date.count_stops) )} );
+            // result.insert ( {"unique_stop_count"s, Node ( static_cast<int> (date.uniq_stops) )} );
+            // result.insert ( {"route_length"s, Node ( date.real_dist )} );
+            // result.insert ( {"curvature"s, Node ( date.curv )} );
+        }
+    }
+    if (answer.type == "Map"s) {
+        auto docum = face_.RenderMap();
+        std::stringstream map_output;
+        docum.Render(map_output);
+        builder.Key("map"s).Value(map_output.str());
+        //result.insert ( { "map"s, Node {map_output.str()} } );
+    }
+    builder.EndDict();
+    auto result = builder.Build();
     return result;
 }
 

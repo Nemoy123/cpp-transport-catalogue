@@ -2,6 +2,7 @@
 #include "transport_catalogue.h"
 #include "request_handler.h"
 #include "json.h"
+#include "json_builder.h"
 #include "map_renderer.h"
 
 //using namespace json;
@@ -35,7 +36,10 @@ public:
     void ReadRenderSettings (const std::deque <Document>& raw_documents);
 
     void LoadJSON (); //std::pair <std::deque <request::RequestHandler::Request>, RenderSettings>
+
     Dict FormatAnsertToJSON (request::RequestHandler::Answer& answer);
+    Node FormatAnsertToJSONBuilder (request::RequestHandler::Answer& answer); 
+
     const std::deque <request::RequestHandler::Request>& GiveRequests () const { return requests_;}
     const RenderSettings& GiveRenderSettings () const {return render_settings_;}
 

@@ -291,7 +291,16 @@ const Array& Node::AsArray() const {
         }
 }
 
-const Dict& Node::AsMap() const {
+Array& Node::AsArray() {
+        
+        if (!IsArray()) {
+            throw std::logic_error("Not an array"s);
+        }
+        return std::get<Array>(value_);
+}
+
+
+const Dict& Node::AsDict() const {
         if (std::holds_alternative<Dict>(value_)) {
             const Dict& x_val = std::get<Dict>(value_);
             return x_val;
@@ -299,6 +308,15 @@ const Dict& Node::AsMap() const {
         else {
             throw std::logic_error ("logic_error");
         }
+}
+
+Dict& Node::AsDict() {
+        using namespace std::literals;
+        if (!IsDict()) {
+            throw std::logic_error("Not a dict"s);
+        }
+
+        return std::get<Dict>(value_);
 }
 
 Document::Document(Node root)
@@ -442,7 +460,7 @@ bool Node::operator==(const Node& rhs) const {
            auto rhs_value = std::holds_alternative<Array>(rhs.value_);
            return lhs_value == rhs_value;
         }
-        if (this->IsMap() && rhs.IsMap()) {
+        if (this->IsDict() && rhs.IsDict()) {
            auto lhs_value = std::holds_alternative<Dict>(this->value_);
            auto rhs_value = std::holds_alternative<Dict>(rhs.value_);
            return lhs_value == rhs_value;
