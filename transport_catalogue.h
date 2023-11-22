@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
+#include <vector>
 #include <map>
 #include "geo.h"
 #include "domain.h"
@@ -25,7 +26,14 @@ public:
     double GetDistance (const Stop* stopA, const Stop* stopB);
     const std::unordered_map <std::string_view, const Stop*>& GetMap() const {return map_stops_;}
     const std::unordered_map <std::string_view, const Bus*>& GetRoutes() const {return map_buses_;}
-
+    
+    struct RoutingSet {
+       int bus_wait_time = 0;
+       double bus_velocity = 0.;
+    };
+    void SetRoutingSet(RoutingSet&& rhs) {routing_set_ = std::move(rhs);};
+    const RoutingSet& GetRoutingSet () const {return routing_set_;}
+    const std::deque <Stop>& GetAllStops () const {return all_stops_;}
 
 private:
     std::deque <Stop> all_stops_;
@@ -42,6 +50,8 @@ private:
         }
     };
     std::unordered_map <std::pair<const Stop*, const Stop*>, int, Hash> distance_stops;
+    
+    RoutingSet routing_set_;
 };
 
 } //конец namespace Transcat

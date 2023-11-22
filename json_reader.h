@@ -29,12 +29,12 @@ public:
 
     //void FillCatalogue (transcat::TransportCatalogue& catalog, std::deque <Document> documents);
     void FillCatalogue (const std::deque <Document>& documents);
-    std::deque <request::RequestHandler::Request> ReadRequest ( std::deque <Document> documents); 
+    std::deque <request::RequestHandler::Request> ReadRequest ( std::deque <Document>&& documents); 
     std::string MakeRGB (int red, int green, int blue);
     std::string MakeRGBA (int red, int green, int blue, double opacity);
     std::string MakeColor (json::Node color);
     void ReadRenderSettings (const std::deque <Document>& raw_documents);
-
+    transcat::TransportCatalogue::RoutingSet ReadRoutingSettings (const std::deque <Document>& raw_documents);
     void LoadJSON (); //std::pair <std::deque <request::RequestHandler::Request>, RenderSettings>
 
     Dict FormatAnsertToJSON (request::RequestHandler::Answer& answer);

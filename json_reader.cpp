@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include "domain.h"
+#include "log_duration.h"
 
 using namespace std::literals;
 using namespace json;
@@ -147,7 +148,7 @@ void JSONReader::FillCatalogue (const std::deque <Document>& documents) {
     }
 }
 
-std::deque <request::RequestHandler::Request> JSONReader::ReadRequest ( std::deque <Document> documents) {
+std::deque <request::RequestHandler::Request> JSONReader::ReadRequest ( std::deque <Document>&& documents) {
     std::deque <request::RequestHandler::Request> result;
     for (auto& doc: documents) {
         const json::Node* temp1 = &doc.GetRoot();
@@ -172,6 +173,14 @@ std::deque <request::RequestHandler::Request> JSONReader::ReadRequest ( std::deq
             it = map_req.AsDict().find("name");
             if (it != map_req.AsDict().end()) {
                 req_el.name = it->second.AsString();
+           }
+           it = map_req.AsDict().find("from");
+            if (it != map_req.AsDict().end()) {
+                req_el.from_stop = it->second.AsString();
+           }
+           it = map_req.AsDict().find("to");
+            if (it != map_req.AsDict().end()) {
+                req_el.to_stop = it->second.AsString();
            }
            result.push_back(req_el);
         }
@@ -266,7 +275,25 @@ void JSONReader::ReadRenderSettings (const std::deque <Document>& raw_documents)
     }
     render_settings_ = (std::move (render_settings));
 }
+transcat::TransportCatalogue::RoutingSet JSONReader::ReadRoutingSettings (const std::deque <Document>& raw_documents) {
+    transcat::TransportCatalogue::RoutingSet result; 
+    for (auto& doc: raw_documents) {
+        const json::Node* temp1 = &doc.GetRoot();
+        if (!temp1->IsDict()) {
+            std::cout << "не валидный запрос\n";
+        }
+        auto map_upper_level = (temp1->AsDict());
+        auto it_map_ul = (map_upper_level).find("routing_settings"s);
+        if (it_map_ul == (map_upper_level).end()) { return {};}
+        auto map_base_render = (it_map_ul->second).AsDict();
 
+        for (const auto& [name, second] : map_base_render)  {
+            if      (name == "bus_velocity"s) { result.bus_velocity = second.AsInt(); }
+            else if (name == "bus_wait_time"s) { result.bus_wait_time = second.AsDouble(); }   
+        }
+    }
+    return result;
+}
 
 void json::read::JSONReader::LoadJSON () {
     
@@ -278,13 +305,24 @@ void json::read::JSONReader::LoadJSON () {
         if (!temp_doc.empty()) {raw_documents.push_back (temp_doc);}
         
     }
+    // {
+    //     LogDuration load1 ("load1 time "s);
+        FillCatalogue (raw_documents);
+    // }
+
+    // {
+    //     LogDuration load2 ("load2 time "s);
+        ReadRenderSettings(raw_documents);
+    // }
+    // {
+    //     LogDuration load3 ("load3 time "s);
+        cat_.SetRoutingSet(ReadRoutingSettings(raw_documents));
+    // }
+    // {
+    //     LogDuration load4 ("load4 time "s);
+        requests_ = ReadRequest (std::move(raw_documents));
+    //}
     
-    FillCatalogue (raw_documents);
-    ReadRenderSettings(raw_documents);
-    //auto result = ReadRequest ( raw_documents);
-    requests_ = ReadRequest ( raw_documents);
-    //return {result, render_settings};
-    // return {};
 }
 
 Dict json::read::JSONReader::FormatAnsertToJSON (request::RequestHandler::Answer& answer) {
@@ -389,6 +427,39 @@ Node json::read::JSONReader::FormatAnsertToJSONBuilder (request::RequestHandler:
         builder.Key("map"s).Value(map_output.str());
         //result.insert ( { "map"s, Node {map_output.str()} } );
     }
+    if (answer.type == "Route"s) {
+        if (answer.not_found_route) {
+            builder.Key("error_message"s).Value("not found"s);
+        }
+        else {
+            builder.Key("total_time"s).Value(answer.route_date.weight);
+            builder.Key("items"s).StartArray();
+            //size_t counter = 0;
+            for (const auto& tr: answer.route_date.edges) {
+
+                builder.StartDict();
+                builder.Key("type"s).Value("Wait"s);
+                //builder.Key("stop_name"s).Value(cat_.GetAllStops().at((answer.edge_info.at(tr).edge.from)).name);
+                builder.Key("stop_name"s).Value(this->face_.GetGraph().GetEdge(tr).name_stop_from);
+                builder.Key("time"s).Value(cat_.GetRoutingSet().bus_wait_time);
+                builder.EndDict();
+
+                builder.StartDict();
+                builder.Key("type"s).Value("Bus"s);
+                builder.Key("bus"s).Value(this->face_.GetGraph().GetEdge(tr).bus_name);
+                //builder.Key("span_count"s).Value(static_cast <double> (answer.edge_info.at(tr).previous_segments_in_edge.size() + 1));
+                //builder.Key("span_count"s).Value(static_cast <double> (answer.edge_info.at(tr).span_count + 1));
+                builder.Key("span_count"s).Value(static_cast <double> (this->face_.GetGraph().GetEdge(tr).segment_edge_size + 1));
+                builder.Key("time"s).Value(this->face_.GetGraph().GetEdge(tr).weight - cat_.GetRoutingSet().bus_wait_time);
+                builder.EndDict();
+                //++counter;
+            } 
+
+            builder.EndArray();
+        }
+    }
+
+
     builder.EndDict();
     auto result = builder.Build();
     return result;

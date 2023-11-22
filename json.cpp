@@ -371,7 +371,7 @@ void PrintValue(const Array& array, std::ostream& out, int tab) {
     //out << std::endl << std::string (tab, 32);
     int old = tab;
     out << "[";
-    out << std::endl<<std::string (tab+=3, 32);
+    out << std::endl<<std::string (tab+=4, 32);
     
     bool begin = true;
     for (const auto& val : array) {
@@ -395,7 +395,7 @@ void PrintValue(const Dict& dict, std::ostream& out, int ots) {
     int old = ots;
     out << "{";
     out << std::endl;
-    out << std::string(ots += 3, 32);
+    out << std::string(ots += 4, 32);
     for (const auto& val : dict) {
         if (!begin) {
             out << ", ";

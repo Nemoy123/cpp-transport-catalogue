@@ -18,6 +18,7 @@
 struct Stop {
         std::string name;
         geo::Coordinates xy;
+        bool operator== (const Stop& other) const {return name == other.name && xy == other.xy;} 
 };
 
 struct Bus {
