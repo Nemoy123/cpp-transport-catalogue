@@ -89,14 +89,7 @@ private:
     RoutesInternalData routes_internal_data_;
 };
 
-// template <typename Weight>
-// Router<Weight>::Router(Router&& other_router):
-//                 graph_(other_router.graph_),
-//                 routes_internal_data_(other_router.routes_internal_data_),
-//                 ZERO_WEIGHT (other_router.ZERO_WEIGHT)
-// {
 
-// }
 
 
 template <typename Weight>

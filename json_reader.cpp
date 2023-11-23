@@ -440,17 +440,17 @@ Node json::read::JSONReader::FormatAnsertToJSONBuilder (request::RequestHandler:
                 builder.StartDict();
                 builder.Key("type"s).Value("Wait"s);
                 //builder.Key("stop_name"s).Value(cat_.GetAllStops().at((answer.edge_info.at(tr).edge.from)).name);
-                builder.Key("stop_name"s).Value(this->face_.GetGraph().GetEdge(tr).name_stop_from);
+                builder.Key("stop_name"s).Value(this->face_.GetRouter().GetGraph().GetEdge(tr).name_stop_from);
                 builder.Key("time"s).Value(cat_.GetRoutingSet().bus_wait_time);
                 builder.EndDict();
 
                 builder.StartDict();
                 builder.Key("type"s).Value("Bus"s);
-                builder.Key("bus"s).Value(this->face_.GetGraph().GetEdge(tr).bus_name);
+                builder.Key("bus"s).Value(this->face_.GetRouter().GetGraph().GetEdge(tr).bus_name);
                 //builder.Key("span_count"s).Value(static_cast <double> (answer.edge_info.at(tr).previous_segments_in_edge.size() + 1));
                 //builder.Key("span_count"s).Value(static_cast <double> (answer.edge_info.at(tr).span_count + 1));
-                builder.Key("span_count"s).Value(static_cast <double> (this->face_.GetGraph().GetEdge(tr).segment_edge_size + 1));
-                builder.Key("time"s).Value(this->face_.GetGraph().GetEdge(tr).weight - cat_.GetRoutingSet().bus_wait_time);
+                builder.Key("span_count"s).Value(static_cast <double> (this->face_.GetRouter().GetGraph().GetEdge(tr).segment_edge_size + 1));
+                builder.Key("time"s).Value(this->face_.GetRouter().GetGraph().GetEdge(tr).weight - cat_.GetRoutingSet().bus_wait_time);
                 builder.EndDict();
                 //++counter;
             } 

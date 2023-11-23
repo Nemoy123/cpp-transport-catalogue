@@ -85,10 +85,10 @@ std::map <int, std::string> TransportCatalogue::GetStopInfo (const std::string_v
     }
 }
 
-double TransportCatalogue::GetDistance (const Stop* stopA, const Stop* stopB) {
+double TransportCatalogue::GetDistance (const Stop* stopA, const Stop* stopB) const {
     if (distance_stops.find({stopA, stopB}) == distance_stops.end())
-        { return static_cast<double> (distance_stops[{stopB, stopA}]); }
-    return static_cast<double> (distance_stops[{stopA, stopB}]);
+        { return static_cast<double> (distance_stops.at({stopB, stopA})); }
+    return static_cast<double> (distance_stops.at({stopA, stopB}));
 }
 
 void TransportCatalogue::InputDistance (const Stop* stopA, const Stop* stopB, const int distance) {

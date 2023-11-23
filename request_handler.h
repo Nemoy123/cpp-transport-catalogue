@@ -6,6 +6,7 @@
 #include "transport_catalogue.h"
 
 #include "router.h"
+#include "transport_router.h"
 //
 
 using BusStat = std::tuple <std::string_view, std::size_t, std::size_t, double, double>;
@@ -53,9 +54,9 @@ public:
     RequestHandler (transcat::TransportCatalogue& cat, std::istream& input, std::ostream& output) : 
                         db_(cat), 
                         input_(input), 
-                        output_(output),
+                        output_(output)
                         // dw_graph_(),
-                        router_(dw_graph_)
+                        //router_(dw_graph_)
     {
                          
                          //graph::DirectedWeightedGraph<double> dw_graph_ (db_.GetAllStops().size());
@@ -80,7 +81,10 @@ public:
     void InputRequestDeque (std::deque <Request> inp) {req_deq_ = std::move(inp);}
     void InputRenderSettings (RenderSettings rs) {render_settings_ = std::move(rs);}
     const RenderSettings& GetRenderSettings() {return render_settings_;}
-    const graph::DirectedWeightedGraph<double>& GetGraph () const {return dw_graph_;}
+    // const graph::DirectedWeightedGraph<double>& GetGraph () const {
+    //     auto temp = router_.GetGraph();
+    //     return temp;}
+    TransportRouter<double>& GetRouter () {return router_;}
     
 
 private:
@@ -94,10 +98,12 @@ private:
     //json::read::JSONReader json_reader_ = {db_, this, input_};
     std::deque <Request> req_deq_ = {}; // очередь выполнения
     RenderSettings render_settings_;
-    graph::DirectedWeightedGraph<double> dw_graph_;
-    graph::Router<double> router_;
+    //graph::DirectedWeightedGraph<double> dw_graph_;
+    //graph::Router<double> router_;
     
-    void YouCanMakeItRealRouter (); //const Request& it
+    //void YouCanMakeItRealRouter (); //const Request& it
+    TransportRouter<double> router_;
+
 };
 
 

@@ -23,7 +23,7 @@ public:
     BusInfo GetBusInfo (const std::string_view bus_name);
     std::map <int, std::string> GetStopInfo (const std::string_view stop_name);
     void InputDistance (const Stop* stopA, const Stop* stopB, const int distance);
-    double GetDistance (const Stop* stopA, const Stop* stopB);
+    double GetDistance (const Stop* stopA, const Stop* stopB) const;
     const std::unordered_map <std::string_view, const Stop*>& GetMap() const {return map_stops_;}
     const std::unordered_map <std::string_view, const Bus*>& GetRoutes() const {return map_buses_;}
     
