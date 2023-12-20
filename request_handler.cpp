@@ -1,12 +1,13 @@
 #include "request_handler.h"
 #include <iostream>
 #include <algorithm>
-#include <execution>
+//#include <execution>
 #include <mutex>
 #include <unordered_set>
 #include "json_reader.h"
-#include "log_duration.h"
+// #include "log_duration.h"
 #include "router.h"
+#include "serialization.h"
 
 using namespace std::literals;
 using namespace renderer;
@@ -17,55 +18,7 @@ using namespace json;
 
 namespace request {
 
-// void RequestHandler::YouCanMakeItRealRouter () { //const Request& it
-//       //LogDuration router_graph_construction ("router_graph_construction "s); 
 
-//                 //setting_router = true; 
-//                 dw_graph_.SetVertexCount(db_.GetAllStops().size());
-                
-//                 for (const auto& [bus_name, bus] : db_.GetRoutes()) {
-                
-//                     const std::deque<const Stop*>& bus_stops = bus->bus_stops;
-//                     std::vector <graph::Edge<double>> segment_edge(bus_stops.size());                
-//                     for (auto i = bus_stops.cbegin(); i+1 != bus_stops.cend(); ++i) {
-//                         segment_edge.clear();
-//                         for (auto n = i+1; n != bus_stops.cend(); ++n) {
-                                
-//                                 graph::Edge<double> edge{};
-
-                                
-//                                 edge.bus_name = bus_name;
-
-//                                 auto it_from = std::find ((db_.GetAllStops()).cbegin(), (db_.GetAllStops()).cend(), *(*i)); //std::execution::par, 
-//                                 edge.from = it_from - db_.GetAllStops().cbegin();
-//                                 edge.name_stop_from = (db_.GetAllStops().at(edge.from)).name;
-//                                 auto it_to = std::find ( (db_.GetAllStops()).cbegin(), (db_.GetAllStops()).cend(), *(*n)); //std::execution::par,
-//                                 edge.to = it_to - db_.GetAllStops().cbegin();
-                                
-                                
-//                                 if (segment_edge.empty()) {
-//                                     edge.weight = ((db_.GetDistance (*i, *n))/(db_.GetRoutingSet().bus_velocity*1000/60)) + db_.GetRoutingSet().bus_wait_time;
-//                                 }
-//                                 else {
-//                                     edge.weight += segment_edge.back().weight;
-//                                     const Stop* prev_stop = &(db_.GetAllStops())[segment_edge.back().to]; // последняя остановка в цепочке от нее считаем новое ребро
-//                                     edge.weight += (db_.GetDistance (prev_stop, *n))/(db_.GetRoutingSet().bus_velocity*1000/60);
-//                                 }
-                                
-//                                 edge.segment_edge_size = segment_edge.size();
-//                                 dw_graph_.AddEdge(edge);
-                                
-
-//                                 segment_edge.push_back(std::move(edge));
-//                         }
-//                     }
-
-
-//                 }
-                
-//                 router_ = (std::move(graph::Router<double> (dw_graph_)));
-                
-// }
 
 void RequestHandler::ExecuteRequests () {
     //std::for_each( std::execution::par, req_deq_.begin(), req_deq_.end(), [&](auto& it) {
@@ -117,9 +70,9 @@ void RequestHandler::ExecuteRequests () {
                         continue;
                     }
                 
-                    auto iter1 = std::find (std::execution::par, (db_.GetAllStops()).cbegin(),(db_.GetAllStops()).cend(), *(db_.FindStop(it.from_stop))); // 
+                    auto iter1 = std::find ( (db_.GetAllStops()).cbegin(),(db_.GetAllStops()).cend(), *(db_.FindStop(it.from_stop))); // 
                     size_t from_stop_size = iter1 - (db_.GetAllStops()).cbegin();
-                    auto iter2 = std::find (std::execution::par, (db_.GetAllStops()).cbegin(), (db_.GetAllStops()).cend(), *(db_.FindStop(it.to_stop))); //
+                    auto iter2 = std::find ( (db_.GetAllStops()).cbegin(), (db_.GetAllStops()).cend(), *(db_.FindStop(it.to_stop))); //
                     size_t to_stop_size = iter2 - (db_.GetAllStops()).cbegin();
                     
                     std::optional<graph::Router<double>::RouteInfo> route_info = router_.GetInRouter().BuildRoute(from_stop_size , to_stop_size);
@@ -141,15 +94,17 @@ void RequestHandler::ExecuteRequests () {
 
 template <typename T>
 void OutputRun( T& json_reader, std::deque <request::RequestHandler::Answer>& answer_deq_, std::ostream& output_) {
-    
+    if (answer_deq_.empty()) {std::cout << "answer_deq_ empty!!!" << std::endl;}
     json::Array result;
     for (request::RequestHandler::Answer& ans : answer_deq_) {
-        //json::Dict res = json_reader.FormatAnsertToJSON (ans);
+        // std::cout << "void OutputRun 3" << std::endl;
         auto res = json_reader.FormatAnsertToJSONBuilder (ans);
+        // std::cout << "void OutputRun 4" << std::endl;
         result.push_back(Node (res));
     }   
-
+    // std::cout << "void OutputRun 1" << std::endl;
      json::PrintNode (result, output_);
+    //  std::cout << "void OutputRun 2" << std::endl;
 }
 
 
@@ -158,38 +113,80 @@ svg::Document RequestHandler::RenderMap() const {
     return map_render.MapRenderer();
 }
 
-
-void LoadInput (std::istream& input_t, std::ostream& output) {
+void MakeBase (std::istream& input) {
     transcat::TransportCatalogue cat;
-    request::RequestHandler face (cat, input_t, output);
-    json::read::JSONReader json_reader (cat, face, input_t);
-    // {
-    //     LogDuration load ("load time "s);
-        json_reader.LoadJSON();
-    // }
-    // {
-    //     LogDuration input_request_deque ("input_request_deque time "s);
-        face.InputRequestDeque(json_reader.GiveRequests());
-    // }
-    // {
-    //     LogDuration input_render ("input_input_render time "s);
-        face.InputRenderSettings(json_reader.GiveRenderSettings());
-    // }
-    // {
-    //     LogDuration time_map_render ("input_map_render time "s);
-        MapRender map_render(face.GetRenderSettings(), face.GetTransportBase());
-    //}
+    request::RequestHandler face (cat, input, std::cout);
+    json::read::JSONReader json_reader (cat, face, input);
+    json_reader.LoadJSON();
+    face.InputRenderSettings(json_reader.GiveRenderSettings());
+
+    //std::cout << "json_reader.GiveSerializationSettings() " << json_reader.GiveSerializationSettings() << std::endl;
+
+    face.InputSerializationSettings(json_reader.GiveSerializationSettings());
+
+    //std::cout << "face.GetSerializationSettings() " << face.GetSerializationSettings() << std::endl;
+
+    SavingDB saving_db (face.GetSerializationSettings());
+    if (!saving_db.SerializeDB(cat, face.GetRenderSettings())) {
+        std::cout << "Error SerializeDB" << std::endl;
+    }
+}
+
+void ProcessRequests (std::istream& input, std::ostream& output) {
+    transcat::TransportCatalogue cat;
+    request::RequestHandler face (cat, input, output);
+    json::read::JSONReader json_reader (cat, face, input);
+    json_reader.LoadJSONReadSerializationSettings ();
+    SavingDB saving_db (json_reader.GiveSerializationSettings());
+    if (!saving_db.DeserializeDB(cat, face)) { 
+        std::cout << "Error DeserializeDB" << std::endl;
+    }
+    json_reader.LoadJSONFromSavedInput();
+
+    //std::cout << "json_reader.LoadJSONFromSavedInput() done"<< std::endl;
+    face.InputRequestDeque(json_reader.GiveRequests());
+    //std::cout << "face.InputRequestDeque(json_reader.GiveRequests()); done"<< std::endl;
+    MapRender map_render(face.GetRenderSettings(), face.GetTransportBase());
+    //std::cout << "MapRender map_render(face.GetRenderSettings(), face.GetTransportBase()); done"<< std::endl;
+    face.ExecuteRequests ();
+    // std::cout << "face.ExecuteRequests (); done"<< std::endl;
+    OutputRun(json_reader, face.GetAnswerDeq(), face.GetOutput());
+    // std::cout << "OutputRun done"<< std::endl;
+}
+
+// void LoadInput (std::istream& input_t, std::ostream& output) {
+//     transcat::TransportCatalogue cat;
+//     request::RequestHandler face (cat, input_t, output);
+//     json::read::JSONReader json_reader (cat, face, input_t);
+//     // {
+//     //     LogDuration load ("load time "s);
+//         json_reader.LoadJSON();
+//     // }
+//     // {
+//     //     LogDuration input_request_deque ("input_request_deque time "s);
+//         face.InputRequestDeque(json_reader.GiveRequests());
+//     // }
+//     // {
+//     //     LogDuration input_render ("input_input_render time "s);
+//         face.InputRenderSettings(json_reader.GiveRenderSettings());
+//     // }
+//     // {
+//     //     LogDuration time_map_render ("input_map_render time "s);
+//         face.InputSerializationSettings(json_reader.GiveSerializationSettings());
+
+//         MapRender map_render(face.GetRenderSettings(), face.GetTransportBase());
+//     //}
     
 
-    // { 
-    //     LogDuration exec_requests ("exec_requests time "s);
-        face.ExecuteRequests ();
-    // }
+//     // { 
+//     //     LogDuration exec_requests ("exec_requests time "s);
+//         face.ExecuteRequests ();
+//     // }
 
-    // { 
-    //     LogDuration output_run ("output_run time "s); 
-        OutputRun(json_reader, face.GetAnswerDeq(), face.GetOutput());
-    // }
-}  
+//     // { 
+//     //     LogDuration output_run ("output_run time "s); 
+//         OutputRun(json_reader, face.GetAnswerDeq(), face.GetOutput());
+//     // }
+// }  
 
 } // end namespace 

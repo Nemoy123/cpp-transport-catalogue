@@ -4,8 +4,9 @@
 #include <string>
 #include <unordered_map>
 #include <algorithm>
+#include <sstream>
 #include "domain.h"
-#include "log_duration.h"
+//#include "log_duration.h"
 
 using namespace std::literals;
 using namespace json;
@@ -275,6 +276,27 @@ void JSONReader::ReadRenderSettings (const std::deque <Document>& raw_documents)
     }
     render_settings_ = (std::move (render_settings));
 }
+
+void JSONReader::ReadSerializationSettings (const std::deque <Document>& raw_documents) {
+    std::string result;
+    for (auto& doc: raw_documents) {
+        const json::Node* temp1 = &doc.GetRoot();
+        if (!temp1->IsDict()) {
+            std::cout << "не валидный запрос\n";
+        }
+        auto map_upper_level = (temp1->AsDict());
+        auto it_map_ul = (map_upper_level).find("serialization_settings"s);
+        if (it_map_ul == (map_upper_level).end()) { return;}
+        auto map_base_sset = (it_map_ul->second).AsDict();
+        for (const auto& [name, second] : map_base_sset)  {
+             if (name == "file"s) { result = second.AsString(); } 
+             else {std::cout << "ERROR serialization_settings"; }  
+        }    
+    }
+    ser_settings_ = result;
+}
+
+
 transcat::TransportCatalogue::RoutingSet JSONReader::ReadRoutingSettings (const std::deque <Document>& raw_documents) {
     transcat::TransportCatalogue::RoutingSet result; 
     for (auto& doc: raw_documents) {
@@ -293,6 +315,41 @@ transcat::TransportCatalogue::RoutingSet JSONReader::ReadRoutingSettings (const 
         }
     }
     return result;
+}
+void json::read::JSONReader::LoadJSONReadSerializationSettings () { 
+    std::deque <Document> raw_documents;
+    std::string stroke;
+    std::stringstream temp;
+    while (getline( input_, stroke)) {
+        temp << stroke;
+    }
+    // for (auto i = 0; i < 50; ++i) {
+    //     getline( input_, stroke);
+    //     temp << stroke;
+    // }
+    // while (input_) {
+        
+        
+    // }
+   // while (input_.peek() != EOF) {
+        // std::cout <<"std::stringstream temp " << std::endl;
+        //  std::cout << temp.str() << std::endl;
+        //  std::cout <<"Read Json " << std::endl;
+         
+        
+        Document temp_doc = json::Load(temp);
+        if (!temp_doc.empty()) {raw_documents.push_back (temp_doc);}
+        // std::cout <<"Read Json end" << std::endl;
+        
+    //}
+    ReadSerializationSettings (raw_documents);
+    input_raw_documents = raw_documents;
+}
+void json::read::JSONReader::LoadJSONFromSavedInput () {
+    // FillCatalogue (input_raw_documents);
+    // ReadRenderSettings(input_raw_documents);
+    // cat_.SetRoutingSet(ReadRoutingSettings(input_raw_documents));
+    requests_ = ReadRequest (std::move(input_raw_documents));
 }
 
 void json::read::JSONReader::LoadJSON () {
@@ -316,6 +373,11 @@ void json::read::JSONReader::LoadJSON () {
     // }
     // {
     //     LogDuration load3 ("load3 time "s);
+        ReadSerializationSettings (raw_documents);
+
+        // if (raw_documents.empty()) {std::cout << "raw_documents empty" <<std::endl;}
+        // else {std::cout << "raw_documents not empty" <<std::endl;}
+
         cat_.SetRoutingSet(ReadRoutingSettings(raw_documents));
     // }
     // {
@@ -376,9 +438,11 @@ Node json::read::JSONReader::FormatAnsertToJSONBuilder (request::RequestHandler:
    // Array bus_set;
     Builder builder;
     //result.insert ({"request_id"s, Node (answer.id)});
+    // std::cout << "FormatAnsertToJSONBuilder 1" << std::endl;
     builder.StartDict().Key("request_id"s).Value(answer.id);
-
+    // std::cout << "FormatAnsertToJSONBuilder 2" << std::endl;
     if (answer.type == "Stop"s) {
+        // std::cout << "FormatAnsertToJSONBuilder 3" << std::endl;
         if (!answer.not_found_buses && !answer.not_found_stop) {
             builder.Key("buses"s);
             builder.StartArray();
@@ -404,23 +468,27 @@ Node json::read::JSONReader::FormatAnsertToJSONBuilder (request::RequestHandler:
     }
 
     if (answer.type == "Bus"s) {
+        // std::cout << "FormatAnsertToJSONBuilder 4" << std::endl;
         if (answer.not_found_buses) {
             builder.Key("error_message"s).Value("not found"s);
             //result.insert ({"error_message"s, Node ("not found"s)});
         }else {
+            // std::cout << "FormatAnsertToJSONBuilder 4-1" << std::endl;
             auto date = cat_.GetBusInfo (answer.name);
             //bus_name, count, uniq, real_distance, curv
+            // std::cout << "FormatAnsertToJSONBuilder 4-2" << std::endl;
             builder.Key("stop_count"s).Value(static_cast<int> (date.count_stops));
+            // std::cout << "FormatAnsertToJSONBuilder 4-3" << std::endl;
             builder.Key("unique_stop_count"s).Value(static_cast<int> (date.uniq_stops));
+            // std::cout << "FormatAnsertToJSONBuilder 4-4" << std::endl;
             builder.Key("route_length"s).Value(date.real_dist);
+            // std::cout << "FormatAnsertToJSONBuilder 4-5" << std::endl;
             builder.Key("curvature"s).Value(date.curv);
-            // result.insert ( {"stop_count"s, Node ( static_cast<int> (date.count_stops) )} );
-            // result.insert ( {"unique_stop_count"s, Node ( static_cast<int> (date.uniq_stops) )} );
-            // result.insert ( {"route_length"s, Node ( date.real_dist )} );
-            // result.insert ( {"curvature"s, Node ( date.curv )} );
+            
         }
     }
     if (answer.type == "Map"s) {
+        // std::cout << "FormatAnsertToJSONBuilder 5" << std::endl;
         auto docum = face_.RenderMap();
         std::stringstream map_output;
         docum.Render(map_output);
@@ -428,6 +496,7 @@ Node json::read::JSONReader::FormatAnsertToJSONBuilder (request::RequestHandler:
         //result.insert ( { "map"s, Node {map_output.str()} } );
     }
     if (answer.type == "Route"s) {
+        // std::cout << "FormatAnsertToJSONBuilder 6" << std::endl;
         if (answer.not_found_route) {
             builder.Key("error_message"s).Value("not found"s);
         }
@@ -459,10 +528,12 @@ Node json::read::JSONReader::FormatAnsertToJSONBuilder (request::RequestHandler:
         }
     }
 
-
+    // std::cout << "FormatAnsertToJSONBuilder End" << std::endl;
     builder.EndDict();
     auto result = builder.Build();
+    // std::cout << "FormatAnsertToJSONBuilder Exit" << std::endl;
     return result;
+    
 }
 
 

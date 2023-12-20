@@ -1,6 +1,6 @@
 
 #include <string>
-#include <execution>
+//#include <execution>
 #include "domain.h"
 #include "input_reader.h"
 #include "stat_reader.h"

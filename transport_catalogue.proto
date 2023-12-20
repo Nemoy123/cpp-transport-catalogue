@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package transport_proto;
+
+message Coordinates {
+    double lat = 1;
+    double lng = 2;
+}
+
+message Stop {
+    string name = 1;
+    Coordinates xy = 2;
+}
+
+message Bus {
+    string name = 1;
+    repeated string stops = 2;
+    bool ring = 3;
+}
+
+message BusInfo {
+    string name = 1;
+    uint64 count_stops = 2;
+    uint64 uniq_stops = 3;
+    double real_dis = 4;
+    double curv = 5;
+}
+
+message StopsDistance {
+    string stop1 = 1;
+    string stop2 = 2;
+    uint64 distance =3;
+}
+message RoutingSettings {
+    uint64 bus_wait_time = 1;
+    double bus_velocity = 2;
+} 
+message BusLabelOffset {
+    double dx = 1;
+    double dy = 2;
+} 
+message StopLabelOffset {
+    double dx = 1;
+    double dy = 2;
+}
+
+message ColorPalette {
+    repeated string color = 1;
+}
+
+message RenderSettings {
+    double width = 1;
+    double height = 2;
+    double padding = 3;
+    double line_width = 4;
+    double stop_radius = 5;
+    uint64 bus_label_font_size = 6;
+    BusLabelOffset bus_label_offset = 7;
+    uint64 stop_label_font_size = 8;
+    StopLabelOffset stop_label_offset = 9;
+    string underlayer_color  = 10;
+    double underlayer_width = 11;
+    ColorPalette color_palette = 12;
+
+} 
+
+
+
+message TransportCatalogue { 
+
+    repeated Stop all_stops = 1;
+    repeated Bus all_buses = 2;
+    repeated StopsDistance stop_distance = 3;
+    RoutingSettings routing_settings = 4;
+    RenderSettings render_settings = 5;
+}

@@ -49,7 +49,16 @@ public:
         //std::optional<graph::Router<int>::RouteInfo> route_info;
     };
 
-    
+    //  RequestHandler (transcat::TransportCatalogue& cat, std::istream& input) : 
+    //                     db_(cat), 
+    //                     input_(input), 
+    //                     output_(std::cout)
+    //                     // dw_graph_(),
+    //                     //router_(dw_graph_)
+    // {
+                         
+    //                      //graph::DirectedWeightedGraph<double> dw_graph_ (db_.GetAllStops().size());
+    // }   
     
     RequestHandler (transcat::TransportCatalogue& cat, std::istream& input, std::ostream& output) : 
                         db_(cat), 
@@ -85,14 +94,16 @@ public:
     //     auto temp = router_.GetGraph();
     //     return temp;}
     TransportRouter<double>& GetRouter () {return router_;}
-    
+    void InputSerializationSettings (const std::string& file) {serialization_settings_ = file;}
+    const std::string& GetSerializationSettings () {return serialization_settings_;}
 
 private:
     // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
     transcat::TransportCatalogue& db_;
-    
     std::istream& input_;
     std::ostream& output_;
+    // std::istream& input_ = std::cin;
+    // std::ostream& output_ = std::cout;
     //const renderer::MapRenderer& renderer_;
     std::deque <Answer> answer_deq_ = {}; // очередь ответа
     //json::read::JSONReader json_reader_ = {db_, this, input_};
@@ -103,12 +114,14 @@ private:
     
     //void YouCanMakeItRealRouter (); //const Request& it
     TransportRouter<double> router_;
-
+    std::string serialization_settings_;
 };
 
 
 
 
 void LoadInput (std::istream& input, std::ostream& output);
+void MakeBase (std::istream& input);
+void ProcessRequests (std::istream& input, std::ostream& output);
 
 } // конец namespace

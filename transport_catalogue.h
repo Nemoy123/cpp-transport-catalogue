@@ -34,6 +34,8 @@ public:
     void SetRoutingSet(RoutingSet&& rhs) {routing_set_ = std::move(rhs);};
     const RoutingSet& GetRoutingSet () const {return routing_set_;}
     const std::deque <Stop>& GetAllStops () const {return all_stops_;}
+    const std::deque <Bus>& GetAllBuses () const {return all_buses_;}
+    
 
 private:
     std::deque <Stop> all_stops_;
@@ -50,8 +52,10 @@ private:
         }
     };
     std::unordered_map <std::pair<const Stop*, const Stop*>, int, Hash> distance_stops;
-    
     RoutingSet routing_set_;
+
+public:
+    const std::unordered_map <std::pair<const Stop*, const Stop*>, int, Hash>& GetAllDistances () const {return distance_stops;}
 };
 
 } //конец namespace Transcat

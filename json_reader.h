@@ -42,13 +42,18 @@ public:
 
     const std::deque <request::RequestHandler::Request>& GiveRequests () const { return requests_;}
     const RenderSettings& GiveRenderSettings () const {return render_settings_;}
-
+    const std::string& GiveSerializationSettings() const {return ser_settings_;}
+    void ReadSerializationSettings (const std::deque <Document>& raw_documents);
+    void LoadJSONReadSerializationSettings ();
+    std::deque <Document> input_raw_documents; // входящий запрос
+    void LoadJSONFromSavedInput (); //ввод данных из сохраненных, а не из потока
 private:
     transcat::TransportCatalogue& cat_;
     request::RequestHandler& face_;
     std::istream& input_;
     RenderSettings render_settings_;
     std::deque <request::RequestHandler::Request> requests_;
+    std::string ser_settings_;
 
 };
 
