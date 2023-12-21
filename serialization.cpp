@@ -2,11 +2,7 @@
 #include "transport_catalogue.pb.h"
 #include <fstream>
 
-
-bool SavingDB::SerializeDB (const transcat::TransportCatalogue& cat, const renderer::RenderSettings& ren_set) const {
-    
-
-    transport_proto::TransportCatalogue catalog;
+void SerializeStops (const transcat::TransportCatalogue& cat, transport_proto::TransportCatalogue& catalog) {
     for (const auto& stop : cat.GetAllStops()) {
         transport_proto::Stop stop_proto;
         transport_proto::Coordinates coor;
@@ -16,6 +12,9 @@ bool SavingDB::SerializeDB (const transcat::TransportCatalogue& cat, const rende
         *stop_proto.mutable_xy() = coor;
         *catalog.add_all_stops() = stop_proto;
     }
+}
+
+void SerializeBuses (const transcat::TransportCatalogue& cat, transport_proto::TransportCatalogue& catalog) {
     for (const auto& bus : cat.GetAllBuses()) {
         transport_proto::Bus bus_proto;
         *bus_proto.mutable_name() = bus.name;
@@ -25,13 +24,19 @@ bool SavingDB::SerializeDB (const transcat::TransportCatalogue& cat, const rende
          }
          *catalog.add_all_buses() = bus_proto;
     }
-    for (const auto& [pair_stops, dist] : cat.GetAllDistances()) {
+}
+
+void SerializeDistances (const transcat::TransportCatalogue& cat, transport_proto::TransportCatalogue& catalog) {
+        for (const auto& [pair_stops, dist] : cat.GetAllDistances()) {
         transport_proto::StopsDistance std;
         *std.mutable_stop1() = pair_stops.first->name;
         *std.mutable_stop2() = pair_stops.second->name;
         std.set_distance(dist);
         *catalog.add_stop_distance() = std;
     }
+}
+
+void SerializeRenderer (const transcat::TransportCatalogue& cat, transport_proto::TransportCatalogue& catalog,  const renderer::RenderSettings& ren_set) {
     catalog.mutable_routing_settings()->set_bus_velocity(cat.GetRoutingSet().bus_velocity);
     catalog.mutable_routing_settings()->set_bus_wait_time(cat.GetRoutingSet().bus_wait_time);
 
@@ -51,9 +56,19 @@ bool SavingDB::SerializeDB (const transcat::TransportCatalogue& cat, const rende
     for (auto i = 0; i < ren_set.color_palette.color_palette.size(); ++i) {
         catalog.mutable_render_settings()->mutable_color_palette()->add_color(ren_set.color_palette.color_palette.at(i));
     }
+}
 
+bool SavingDB::SerializeDB (const transcat::TransportCatalogue& cat, const renderer::RenderSettings& ren_set) const {
+    
+    transport_proto::TransportCatalogue catalog;
+
+    SerializeStops (cat, catalog);
+    SerializeBuses (cat, catalog);
+    SerializeDistances (cat, catalog);
+    SerializeRenderer (cat, catalog, ren_set);
+    
     std::ofstream out(file_name_, std::ios::binary);
-    // std::cout << "file_name_ " << file_name_ << std::endl;
+    
     if (catalog.SerializeToOstream(&out)) {
         return true;
     }
@@ -61,16 +76,7 @@ bool SavingDB::SerializeDB (const transcat::TransportCatalogue& cat, const rende
     
 }
 
-bool SavingDB::DeserializeDB (transcat::TransportCatalogue& cat, request::RequestHandler& face) {
-    std::ifstream in (file_name_, std::ios::binary);
-    transport_proto::TransportCatalogue catalog;
-    catalog.ParseFromIstream(&in);
-
-    transcat::TransportCatalogue::RoutingSet set;
-    set.bus_velocity = catalog.mutable_routing_settings()->bus_velocity();
-    set.bus_wait_time = catalog.mutable_routing_settings()->bus_wait_time();
-    cat.SetRoutingSet(std::move(set));
-
+void DeserializeStops (transcat::TransportCatalogue& cat, transport_proto::TransportCatalogue& catalog) {
     auto size_catalog_all_stops_size = catalog.all_stops_size();
     for (auto i = 0; i < size_catalog_all_stops_size; ++i) {
         Stop stop;
@@ -79,6 +85,9 @@ bool SavingDB::DeserializeDB (transcat::TransportCatalogue& cat, request::Reques
         stop.xy.lng = catalog.all_stops(i).xy().lng();
         cat.AddStop(std::move(stop));
     }
+}
+
+void DeserializeBuses (transcat::TransportCatalogue& cat, transport_proto::TransportCatalogue& catalog) {
     auto size_catalog_all_buses_size = catalog.all_buses_size();
     for (auto i = 0; i < catalog.all_buses_size(); ++i) { 
         Bus bus;
@@ -92,6 +101,9 @@ bool SavingDB::DeserializeDB (transcat::TransportCatalogue& cat, request::Reques
         bus.bus_stops = std::move(stops_deq);
         cat.AddBusRoute(std::move(bus));
     }
+}
+
+void DeserializeDistances (transcat::TransportCatalogue& cat, transport_proto::TransportCatalogue& catalog) {
     auto size_catalog_stop_distance_size = catalog.stop_distance_size();
     for (auto i = 0; i < catalog.stop_distance_size(); ++i) {  
         std::pair<const Stop*, const Stop*> pair_st;
@@ -100,6 +112,13 @@ bool SavingDB::DeserializeDB (transcat::TransportCatalogue& cat, request::Reques
         pair_st.second = cat.FindStop(catalog.stop_distance(i).stop2());
         cat.InputDistance(pair_st.first, pair_st.second, dist);
     }
+}
+
+void DeserializeRenderer (transcat::TransportCatalogue& cat, transport_proto::TransportCatalogue& catalog, request::RequestHandler& face) {
+    transcat::TransportCatalogue::RoutingSet set;
+    set.bus_velocity = catalog.mutable_routing_settings()->bus_velocity();
+    set.bus_wait_time = catalog.mutable_routing_settings()->bus_wait_time();
+    cat.SetRoutingSet(std::move(set));
     RenderSettings rs;
     rs.width = catalog.mutable_render_settings()->width();
     rs.height = catalog.mutable_render_settings()->height();
@@ -118,5 +137,17 @@ bool SavingDB::DeserializeDB (transcat::TransportCatalogue& cat, request::Reques
         rs.color_palette.color_palette.push_back(catalog.mutable_render_settings()->color_palette().color(i));
     }
     face.InputRenderSettings(std::move(rs));
+}
+
+bool SavingDB::DeserializeDB (transcat::TransportCatalogue& cat, request::RequestHandler& face) {
+    std::ifstream in (file_name_, std::ios::binary);
+    transport_proto::TransportCatalogue catalog;
+    catalog.ParseFromIstream(&in);
+
+    DeserializeStops (cat, catalog);
+    DeserializeBuses (cat, catalog);
+    DeserializeDistances (cat, catalog);
+    DeserializeRenderer (cat, catalog, face);
+    
     return true;
 }
