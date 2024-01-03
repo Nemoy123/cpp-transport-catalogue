@@ -1,25 +1,58 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
+project(spreadsheet)
 
-project(Transport_Catalogue CXX)
 set(CMAKE_CXX_STANDARD 17)
-list(APPEND CMAKE_PREFIX_PATH "./Protobuf")
-find_package(Protobuf REQUIRED)
+if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    set(
+        CMAKE_CXX_FLAGS_DEBUG
+        "${CMAKE_CXX_FLAGS_DEBUG} /JMC"
+    )
+else()
+    set(
+        CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Wno-unused-parameter -Wno-implicit-fallthrough"
+    )
+endif()
 
-# (Под *nix может понадобиться дополнительный пакет Threads и соответствующий флаг линковщику).
-find_package(Threads REQUIRED)
+set(ANTLR_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/antlr-4.13.1-complete.jar)
+include(${CMAKE_CURRENT_SOURCE_DIR}/FindANTLR.cmake)
 
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS transport_catalogue.proto)
+add_definitions(
+    -DANTLR4CPP_STATIC
+    -D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+)
 
-set(CAT_FILES domain.h geo.h graph.h json_builder.h json_reader.h json.h map_renderer.h ranges.h request_handler.h router.h serialization.h svg.h transport_catalogue.h transport_router.h main.cpp domain.cpp geo.cpp json_builder.cpp json_reader.cpp json.cpp map_renderer.cpp request_handler.cpp 
-serialization.cpp svg.cpp transport_catalogue.cpp transport_router.cpp transport_catalogue.proto)
-# set(CAT_FILES domain.h geo.h graph.h input_reader.h json_builder.h json_reader.h json.h log_duration.h map_renderer.h ranges.h request_handler.h router.h serialization.h stat_reader.h svg.h transport_catalogue.h transport_router.h main.cpp domain.cpp geo.cpp input_reader.cpp json_builder.cpp json_reader.cpp json.cpp map_renderer.cpp request_handler.cpp 
-# serialization.cpp stat_reader.cpp svg.cpp transport_catalogue.cpp transport_router.cpp transport_catalogue.proto)
+set(WITH_STATIC_CRT OFF CACHE BOOL "Visual C++ static CRT for ANTLR" FORCE)
+add_subdirectory(antlr4_runtime)
 
-add_executable(transport_catalogue ${PROTO_SRCS} ${PROTO_HDRS} ${CAT_FILES})
-target_include_directories(transport_catalogue PUBLIC ${Protobuf_INCLUDE_DIRS})
-target_include_directories(transport_catalogue PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+antlr_target(FormulaParser Formula.g4 LEXER PARSER LISTENER)
 
-string(REPLACE "protobuf.lib" "protobufd.lib" "Protobuf_LIBRARY_DEBUG" "${Protobuf_LIBRARY_DEBUG}")
-string(REPLACE "protobuf.a" "protobufd.a" "Protobuf_LIBRARY_DEBUG" "${Protobuf_LIBRARY_DEBUG}")
+include_directories(
+    ${ANTLR4_INCLUDE_DIRS}
+    ${ANTLR_FormulaParser_OUTPUT_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/antlr4_runtime/runtime/src
+)
 
-target_link_libraries(transport_catalogue "$<IF:$<CONFIG:Debug>,${Protobuf_LIBRARY_DEBUG},${Protobuf_LIBRARY}>" Threads::Threads)
+file(GLOB sources
+    *.cpp
+    *.h
+)
+
+add_executable(
+    spreadsheet
+    ${ANTLR_FormulaParser_CXX_OUTPUTS}
+    ${sources}
+)
+
+target_link_libraries(spreadsheet antlr4_static)
+if(MSVC)
+    target_compile_options(antlr4_static PRIVATE /W0)
+endif()
+
+install(
+    TARGETS spreadsheet
+    DESTINATION bin
+    EXPORT spreadsheet
+)
+
+set_directory_properties(PROPERTIES VS_STARTUP_PROJECT spreadsheet)
